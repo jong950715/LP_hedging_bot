@@ -2,3 +2,4 @@
 - balance 주기값 어떻게 schedule?
 - 에러코드 설정해서 관리도 좀 하고 반복 텔레그램도 거르자
 - test for git
+- test for git2

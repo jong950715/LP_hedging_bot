@@ -1,0 +1,30 @@
+2021-11-17 20:50:43,262 ##ERROR## : 
+	 hihi 
+	 >> File "MyLogger.py", line 85, in MyLogger2021-11-17 20:51:29,963 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 86, in MyLogger2021-11-17 22:04:49,915 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 93, in MyLogger2021-11-17 22:05:36,352 ##ERROR## : 
+	 hihi 
+	 >> File "MyLogger.py", line 93, in MyLogger2021-11-17 22:06:03,584 ##ERROR## : 
+	 hihi 
+	 >> File "MyLogger.py", line 93, in MyLogger2021-11-17 22:06:18,146 ##ERROR## : 
+	 hihi 
+	 >> File "MyLogger.py", line 93, in MyLogger2021-11-17 22:06:33,086 ##ERROR## : 
+	 hihi 
+	 >> File "MyLogger.py", line 93, in MyLogger2021-11-17 22:07:08,437 ##ERROR## : 
+	 hihi 
+	 >> File "MyLogger.py", line 94, in MyLogger2021-11-17 22:07:53,899 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 94, in MyLogger2021-11-17 22:27:26,855 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 93, in MyLogger
+2021-11-17 23:08:13,797 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 92, in MyLogger
+2021-11-17 23:09:36,003 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 92, in MyLogger
+2021-11-18 00:14:26,431 ##INFO## : 
+	 hihi 
+	 >> File "MyLogger.py", line 90, in MyLogger

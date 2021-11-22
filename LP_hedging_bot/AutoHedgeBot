@@ -1,0 +1,119 @@
+
+2021-11-18 13:21:16,404 ##INFO## : 
+	 #ORDER# sym : FTMUSDT, p : 2.152680, q : -31.996812 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 13:21:16,405 ##INFO## : 
+	 #ORDER# sym : TRXUSDT, p : 0.110200, q : -625.062273 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 14:34:48,617 ##INFO## : 
+	 #ORDER# sym : FTMUSDT, p : 2.132550, q : -31.951414 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 14:34:48,617 ##INFO## : 
+	 #ORDER# sym : TRXUSDT, p : 0.108860, q : -625.950382 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 14:34:51,639 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\trading\BnTrading.py", line 142, in run
+    1/0
+ZeroDivisionError: division by zero
+ 
+	 >> File "createTask.py", line 19, in createTask
+2021-11-18 14:42:08,727 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\bn_data\BnBalance.py", line 59, in run
+    await self.updateBalance()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\bn_data\BnBalance.py", line 48, in updateBalance
+    print(ret.result())
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\bn_data\BnBalance.py", line 45, in updateBalance
+    msg = ret.result()[0]
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\venv\lib\site-packages\binance\client.py", line 8035, in futures_position_information
+    return await self._request_futures_api('get', 'positionRisk', True, data=params)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\venv\lib\site-packages\binance\client.py", line 7127, in _request_futures_api
+    return await self._request(method, uri, signed, True, **kwargs)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\venv\lib\site-packages\binance\client.py", line 7105, in _request
+    return await self._handle_response(response)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\venv\lib\site-packages\binance\client.py", line 7113, in _handle_response
+    raise BinanceAPIException(response, response.status, await response.text())
+binance.exceptions.BinanceAPIException: APIError(code=-1021): Timestamp for this request is outside of the recvWindow.
+ 
+	 >> File "createTask.py", line 19, in createTask
+2021-11-18 15:33:29,723 ##INFO## : 
+	 #ORDER#
+ sym : FTMUSDT
+ p : 2.116070
+ q : -31.887932 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 15:33:29,723 ##INFO## : 
+	 #ORDER#
+ sym : TRXUSDT
+ p : 0.107590
+ q : -627.196517 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 15:33:32,718 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\trading\BnTrading.py", line 141, in run
+    1/0
+ZeroDivisionError: division by zero
+ 
+	 >> File "createTask.py", line 19, in createTask
+2021-11-18 17:59:20,571 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\bn_data\BnBalance.py", line 54, in run
+    await self.updateBalance()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\bn_data\BnBalance.py", line 42, in updateBalance
+    returns, pending = await asyncio.wait(tasks)
+  File "C:\Users\user\AppData\Local\Programs\Python\Python39\lib\asyncio\tasks.py", line 392, in wait
+    raise ValueError('Set of coroutines/Futures is empty.')
+ValueError: Set of coroutines/Futures is empty.
+ 
+	 >> File "createTask.py", line 19, in createTask
+2021-11-18 19:44:44,235 ##INFO## : 
+	 #ORDER#
+ sym : FTMUSDT
+ p : 2.036810
+ q : -22.939940 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 19:44:44,235 ##INFO## : 
+	 #ORDER#
+ sym : TRXUSDT
+ p : 0.107190
+ q : -435.920929 
+	 >> File "BnTrading.py", line 41, in BnTrading
+2021-11-18 19:55:41,318 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\trading\BnTrading.py", line 134, in run
+    self.calcTargetBalance()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\auto-hedge\auto-hedge\trading\BnTrading.py", line 67, in calcTargetBalance
+    self.targetBalance[sym1] += (targetAmt1 - n1)
+TypeError: unsupported operand type(s) for -: 'str' and 'float'
+ 
+	 >> File "createTask.py", line 19, in createTask
+2021-11-22 23:52:04,298 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\LP_hedging_bot\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\LP_hedging_bot\bn_data\BnBalance.py", line 55, in run
+    await self.updateBalance()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\LP_hedging_bot\bn_data\BnBalance.py", line 45, in updateBalance
+    msg = ret.result()[0]
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 8035, in futures_position_information
+    return await self._request_futures_api('get', 'positionRisk', True, data=params)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 7127, in _request_futures_api
+    return await self._request(method, uri, signed, True, **kwargs)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 7105, in _request
+    return await self._handle_response(response)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 7113, in _handle_response
+    raise BinanceAPIException(response, response.status, await response.text())
+binance.exceptions.BinanceAPIException: APIError(code=-2015): Invalid API-key, IP, or permissions for action, request ip: 118.221.69.208
+ 
+	 >> File "createTask.py", line 19, in createTask

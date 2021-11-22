@@ -1,0 +1,31 @@
+¸Þ··
+2021-11-15 15:27:44,211 ##INFO## : ¸Þ·· 
+	 >> File "loggingTest.py", line 35, in loggingTest
+2021-11-15 15:32:55,160 ##INFO## : ¸Þ··1 
+	 >> File "loggingTest.py", line 49, in loggingTest
+2021-11-15 15:33:16,790 ##INFO## : ¸Þ··2 
+	 >> File "loggingTest.py", line 50, in loggingTest
+2021-11-15 15:35:27,891 ##INFO## : ¸Þ··1 
+	 >> File "loggingTest.py", line 50, in loggingTest
+2021-11-15 17:45:15,598 ##INFO## : ¸Þ··1 
+	 >> File "loggingTest.py", line 49, in loggingTest
+2021-11-15 17:45:15,599 ##INFO## : ¸Þ··2 
+	 >> File "loggingTest.py", line 50, in loggingTest
+2021-11-15 17:45:15,599 ##INFO## : ¸Þ··3 
+	 >> File "loggingTest.py", line 51, in loggingTest
+2021-11-15 17:45:20,625 ##INFO## : ¸Þ··1 
+	 >> File "loggingTest.py", line 49, in loggingTest
+2021-11-15 17:45:45,788 ##INFO## : ¸Þ··1 
+	 >> File "loggingTest.py", line 49, in loggingTest
+2021-11-15 17:55:11,167 ##INFO## : ¸Þ··1 
+	 >> File "loggingTest.py", line 50, in loggingTest
+2021-11-15 17:55:11,167 ##INFO## : ¸Þ··2 
+	 >> File "loggingTest.py", line 51, in loggingTest
+2021-11-15 17:55:11,167 ##INFO## : ¸Þ··3 
+	 >> File "loggingTest.py", line 52, in loggingTest
+2021-11-15 17:55:26,132 ##WARNING## : ¸Þ··1 
+	 >> File "loggingTest.py", line 50, in loggingTest
+2021-11-15 17:55:26,133 ##INFO## : ¸Þ··2 
+	 >> File "loggingTest.py", line 51, in loggingTest
+2021-11-15 17:55:26,133 ##INFO## : ¸Þ··3 
+	 >> File "loggingTest.py", line 52, in loggingTest

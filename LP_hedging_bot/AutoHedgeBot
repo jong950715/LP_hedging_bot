@@ -117,3 +117,22 @@ TypeError: unsupported operand type(s) for -: 'str' and 'float'
 binance.exceptions.BinanceAPIException: APIError(code=-2015): Invalid API-key, IP, or permissions for action, request ip: 118.221.69.208
  
 	 >> File "createTask.py", line 19, in createTask
+2021-11-24 01:44:27,692 ##ERROR## : 
+	 Traceback (most recent call last):
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\LP_hedging_bot\common\createTask.py", line 14, in _handle_task_result
+    task.result()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\LP_hedging_bot\bn_data\BnBalance.py", line 55, in run
+    await self.updateBalance()
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\LP_hedging_bot\bn_data\BnBalance.py", line 45, in updateBalance
+    msg = ret.result()[0]
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 8102, in futures_position_information
+    return await self._request_futures_api('get', 'positionRisk', True, data=params)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 7179, in _request_futures_api
+    return await self._request(method, uri, signed, True, **kwargs)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 7157, in _request
+    return await self._handle_response(response)
+  File "C:\Users\user\Dropbox\ÆÄÀÌ½ã\LP_hedging_bot\venv\lib\site-packages\binance\client.py", line 7165, in _handle_response
+    raise BinanceAPIException(response, response.status, await response.text())
+binance.exceptions.BinanceAPIException: APIError(code=-2015): Invalid API-key, IP, or permissions for action, request ip: 118.221.69.208
+ 
+	 >> File "createTask.py", line 19, in createTask

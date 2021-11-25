@@ -7,7 +7,7 @@ from view.MyLogger import MyLogger
 from bn_data.BnExInfo import BnExInfo
 from bn_data.BnBalance import BnBalance
 from bn_data.BnWebSocket import BnWebSocket
-from config.config import getConfigKeys, getConfigPools, getConfigTrading
+from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger
 from common.createTask import createTask
 
 import asyncio
@@ -19,15 +19,18 @@ async def main():
     configPools = getConfigPools()
     configKeys = getConfigKeys()
     configTrading = getConfigTrading()
+    configLogger = getConfigLogger()
+    configs = {'configPools': configPools, 'configKeys': configKeys,
+               'configTrading': configTrading, 'configLogger': configLogger}
     symbols = getSymbolsFromPools(configPools)
 
     # 객체 생성, 의존성 주입
     # layer1
     client = await AsyncClient.create(configKeys['binance']['api_key'], configKeys['binance']['secret_key'])
-    myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id'])
+    myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id'], configs)
 
     # layer1.5
-    myLogger = await MyLogger.createIns(myTelegram)  # global
+    myLogger = await MyLogger.createIns(myTelegram, configLogger)  # global
 
     # layer2
     bnBalance = await BnBalance.createIns(client, symbols)
@@ -35,7 +38,8 @@ async def main():
     bnExInfo = await BnExInfo.createIns(client, symbols)
 
     # layer3
-    bnTrading = await BnTrading.createIns(client, configPools=configPools, configTrading=configTrading, bnExInfo=bnExInfo, bnBalance=bnBalance,
+    bnTrading = await BnTrading.createIns(client, configPools=configPools, configTrading=configTrading,
+                                          bnExInfo=bnExInfo, bnBalance=bnBalance,
                                           bnWebSocket=bnWebSocket)
     myConsole = MyConsole(bnBalance=bnBalance, bnWebSocket=bnWebSocket, symbols=symbols)
 

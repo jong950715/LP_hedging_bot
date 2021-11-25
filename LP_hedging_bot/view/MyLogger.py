@@ -15,7 +15,6 @@ LOGGER_NAME = 'myLogger'
 LOGGER_LEVEL = logging.DEBUG
 LOG_FILE_NAME = '/view/AutoHedgeBot'
 EAGER_THREASHOLD = 35
-MIN_VALUE_PERIOD = 90
 
 
 class MyFileHandler(logging.Handler):
@@ -56,7 +55,8 @@ class TeleGramHandler(logging.Handler):
 
 
 class MyLogger(SingleTonAsyncInit):
-    async def _asyncInit(self, myTelegram: MyTelegram):
+    async def _asyncInit(self, myTelegram: MyTelegram, configLogger):
+        self.config = configLogger
         self.logger = logging.getLogger(LOGGER_NAME)
         self.logger.setLevel(LOGGER_LEVEL)
         formatter = logging.Formatter(
@@ -69,28 +69,25 @@ class MyLogger(SingleTonAsyncInit):
         self.fileHandler = MyFileHandler(filename = getRootDir() + LOG_FILE_NAME)
         self.teleHandler = TeleGramHandler(myTelegram)
 
-        self.basePeriod = 10
-        self.defaultPeriod = 60 / self.basePeriod
-
-        # flags에 직접 접근 절대 금지
-        self.flags = defaultdict(lambda: self.defaultFlag())  # flags['name'] = [flag, period]
-        self.timer = defaultdict(lambda: [[0], set()])  # timer[period] = [[cnt], names]
-
         self.handlers = [self.consoleHandler, self.fileHandler, self.teleHandler]
 
         for h in self.handlers:
             h.setFormatter(formatter)
             self.logger.addHandler(h)
 
+        # flags에 직접 접근 절대 금지
+        self.flags = defaultdict(lambda: self.defaultNewFlag())  # flags['name'] = [flag, period]
+        self.timer = defaultdict(lambda: [[0], set()])  # timer[period] = [[cnt], names]
+
     def getLogger(self):
         return self.logger
 
-    def defaultFlag(self):
-        defaultPeriod = self.defaultPeriod
+    def defaultNewFlag(self):
+        newPeriod = self.config['config']['default_period'] / self.config['config']['base_period']
         if 'minValue' in self.newKey:
-            defaultPeriod = MIN_VALUE_PERIOD/self.basePeriod
-        self.timer[defaultPeriod][1].add(self.newKey)
-        return [False, defaultPeriod]
+            newPeriod = self.config['config']['min_value_period']/self.config['config']['base_period']
+        self.timer[newPeriod][1].add(self.newKey)
+        return [False, newPeriod]
 
     def accessFlags(self, key):
         self.newKey = key
@@ -110,7 +107,7 @@ class MyLogger(SingleTonAsyncInit):
         self.setPeriodOfFlagName(flagName, newPeriod)
 
     def setPeriodOfFlagName(self, flagName, newPeriod):
-        newPeriod = newPeriod / self.basePeriod
+        newPeriod = newPeriod / self.config['config']['base_period']
         oldPeriod = self.accessFlags(flagName)[1]
         self.accessFlags(flagName)[1] = newPeriod
 
@@ -133,7 +130,7 @@ class MyLogger(SingleTonAsyncInit):
     async def run(self):
         # flush every 10seconds
         while True:
-            await asyncio.sleep(self.basePeriod)
+            await asyncio.sleep(self.config['config']['base_period'])
             self.fileHandler.myFlush()
             self.scheduler()
 

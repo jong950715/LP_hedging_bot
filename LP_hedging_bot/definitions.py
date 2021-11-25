@@ -2,8 +2,8 @@ import os
 
 
 def getRootDir():
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-    return ROOT_DIR
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    return root_dir
 
 
 def main():

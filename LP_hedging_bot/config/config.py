@@ -1,5 +1,5 @@
 import configparser
-import definitions
+from definitions import getRootDir
 
 CONFIG_KEYS = '/config/config_keys.ini'
 CONFIG_POOLS = '/config/config_pools.ini'
@@ -62,7 +62,7 @@ def getConfigTrading():
 
 
 def getConfigFromFile(_configFile):
-    file = definitions.getRootDir() + _configFile
+    file = getRootDir() + _configFile
     config = configparser.ConfigParser()
     config.read(file, encoding='utf-8')
 

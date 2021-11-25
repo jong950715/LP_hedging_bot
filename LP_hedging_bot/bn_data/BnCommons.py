@@ -35,7 +35,9 @@ def _symbolToTickerMarket(symbol):
 def getSymbolsFromPools(configPools):
     symbols = set()
     for pool, configs in configPools.items():
-        symbols.add(configs['sym1'])
-        symbols.add(configs['sym2'])
+        if configs['sym1'] not in FIATS:
+            symbols.add(configs['sym1'])
+        if configs['sym2'] not in FIATS:
+            symbols.add(configs['sym2'])
 
     return list(symbols)

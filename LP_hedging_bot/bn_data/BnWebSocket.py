@@ -21,8 +21,8 @@ class BnWebSocket(SingleTonAsyncInit):
 
     def setFiatsOrderBook(self):
         for sym in self.fiats:
-            self.orderBook[sym]['bid'] = [1, 100000] * MaxOderBookDepth
-            self.orderBook[sym]['ask'] = [1, 100000] * MaxOderBookDepth
+            self.orderBook[sym]['bid'] = [[1, 100000] * MaxOderBookDepth]
+            self.orderBook[sym]['ask'] = [[1, 100000] * MaxOderBookDepth]
             self.orderBook[sym]['update'] = True
     def getOrderBook(self):
         return self.orderBook

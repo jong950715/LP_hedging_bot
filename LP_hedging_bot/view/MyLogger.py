@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from common.SingleTonAsyncInit import SingleTonAsyncInit
+from definitions import getRootDir
 from view.MyTelegram import MyTelegram
 from collections import defaultdict
 
@@ -12,13 +13,13 @@ from collections import defaultdict
 """
 LOGGER_NAME = 'myLogger'
 LOGGER_LEVEL = logging.DEBUG
-LOG_FILE_NAME = 'AutoHedgeBot'
+LOG_FILE_NAME = '/view/AutoHedgeBot'
 EAGER_THREASHOLD = 35
 MIN_VALUE_PERIOD = 90
 
 
 class MyFileHandler(logging.Handler):
-    def __init__(self, filename, mode='a', encoding=None, errors=None):
+    def __init__(self, filename, mode='a', encoding="UTF-8", errors=None):
         logging.Handler.__init__(self)
         self.file = open(filename, mode, encoding=encoding, errors=errors)
 
@@ -59,12 +60,13 @@ class MyLogger(SingleTonAsyncInit):
         self.logger = logging.getLogger(LOGGER_NAME)
         self.logger.setLevel(LOGGER_LEVEL)
         formatter = logging.Formatter(
-            '\n%(asctime)s ##%(levelname)s## : '
-            '\n\t %(message)s '
-            '\n\t >> File "%(filename)s", line %(lineno)s, in %(module)s')
+            '\n|%(asctime)s|'
+            '\n##%(levelname)s##'
+            '\n%(message)s'
+            '\n\t >> File "%(filename)s", line %(lineno)s, in %(module)s\n\n')
 
         self.consoleHandler = logging.StreamHandler()
-        self.fileHandler = MyFileHandler(LOG_FILE_NAME)
+        self.fileHandler = MyFileHandler(filename = getRootDir() + LOG_FILE_NAME)
         self.teleHandler = TeleGramHandler(myTelegram)
 
         self.basePeriod = 10

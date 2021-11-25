@@ -133,6 +133,7 @@ class BnTrading(SingleTonAsyncInit):
                 await asyncio.sleep(0.1)
             self.bnWebSocket.resetFlagOrderBookUpdate()
             self.bnBalance.resetFlagUpdate()
+
             self.calcTargetBalance()
             orders = self.generateOrderList()
             if orders:
@@ -159,11 +160,11 @@ class Order:
         # issue:: 주문금액, 포지션 금액 확인해서 청산비율 체크
 
         if self.price % self.priceStep != 0:
-            message = "\n\n =====가격 정밀도 에러===== \n price : " + str(self.price) + "\n priceStep : " + str(
+            message = " =====가격 정밀도 에러===== \n price : " + str(self.price) + "\n priceStep : " + str(
                 self.priceStep) + '\n =====가격 정밀도 에러=====\n'
             raise Exception(message)
         if self.qty % self.qtyStep != 0:
-            message = ('\n\n =====수량 정밀도 에러====='
+            message = (' =====수량 정밀도 에러====='
                        '\n sym : {0}'
                        '\n qty : {1}'
                        '\n qtyStep : {2}'
@@ -173,7 +174,7 @@ class Order:
         if abs(self.qty * self.price) < self.minValue:
             self.error |= 0x01
             if MyLogger.getInsSync().checkFlags('minValue{0}'.format(self.sym)) is False:
-                message = ('\n\n =====주문금액 작아서 에러===== '
+                message = (' =====주문금액 작아서 에러===== '
                            '\n sym : {0} '
                            '\n qty*price : {1} '
                            '\n =====주문금액 작아서 에러=====\n'

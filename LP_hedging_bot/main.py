@@ -12,6 +12,7 @@ from common.createTask import createTask
 
 import asyncio
 import sys
+import platform
 
 
 async def main():
@@ -48,7 +49,8 @@ async def main():
         tasks.append(createTask(bnWebSocket.run()))
         tasks.append(createTask(bnBalance.run()))
         tasks.append(createTask(bnExInfo.run()))
-        tasks.append(createTask(myConsole.run()))
+        if platform.system() == 'Windows' or platform.system() == 'Darwin':
+            tasks.append(createTask(myConsole.run()))
         tasks.append(createTask(bnTrading.run()))
         await asyncio.wait(tasks)
     except Exception as e:

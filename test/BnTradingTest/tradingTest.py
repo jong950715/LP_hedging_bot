@@ -1,7 +1,7 @@
 from trading.BnTrading import BnTrading
 from binance import AsyncClient
 from view.MyConsole import *
-from config.config import getConfigKeys, getConfigPool
+from config.config import getConfigKeys, getConfigPools
 from collections import defaultdict
 import sys
 

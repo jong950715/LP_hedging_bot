@@ -17,7 +17,7 @@ class MyConsole():
 
     async def run(self):
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
             print('\n\n\n\n', flush=False)
             tb = PrettyTable()
             tb.field_names = ['ticker', 'amt', 'bid', 'ask']

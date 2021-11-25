@@ -2,25 +2,12 @@ import configparser
 import definitions
 
 CONFIG_KEYS = '/config/config_keys.ini'
-CONFIG_SYMBOL = '/config/config_symbol.ini'
-CONFIG_POOL = '/config/config_pool.ini'
+CONFIG_POOLS = '/config/config_pools.ini'
+CONFIG_TRADING = '/config/config_trading.ini'
 
 '''
 ini는 대소문자 안가림
 '''
-
-
-def config_generator_symbol():
-    config = configparser.ConfigParser()
-
-    config['FTMUSDT'] = {}
-    config['FTMUSDT']['K'] = str(500 * 500)
-    config['FTMUSDT']['price_step'] = str(0.00001)
-    config['FTMUSDT']['qty_step'] = str(1)
-
-    # 설정파일 저장
-    with open(CONFIG_SYMBOL, 'w', encoding='utf-8') as configfile:
-        config.write(configfile)
 
 
 def convertType(n):
@@ -32,7 +19,6 @@ def convertType(n):
         except ValueError as e:
             pass
     return n
-    print(n, type(n))
 
 
 def config_read(config_file):
@@ -40,12 +26,9 @@ def config_read(config_file):
 
 
 def getConfigKeys():
-    file = getConfigFile(CONFIG_KEYS)
-    config = configparser.ConfigParser()
-    config.read(file, encoding='utf-8')
+    config = getConfigFromFile(CONFIG_KEYS)
 
     res = dict()
-
     for section in config.sections():
         res[section] = dict()
         for d in config[section]:
@@ -54,13 +37,10 @@ def getConfigKeys():
     return res
 
 
-def getConfigPool():
-    file = getConfigFile(CONFIG_POOL)
-    config = configparser.ConfigParser()
-    config.read(file, encoding='utf-8')
+def getConfigPools():
+    config = getConfigFromFile(CONFIG_POOLS)
 
     res = dict()
-
     for section in config.sections():
         res[section] = dict()
         for d in config[section]:
@@ -69,8 +49,24 @@ def getConfigPool():
     return res
 
 
-def getConfigFile(_configFile):
-    return definitions.getRootDir() + _configFile
+def getConfigTrading():
+    config = getConfigFromFile(CONFIG_TRADING)
+
+    res = dict()
+    for section in config.sections():
+        res[section] = dict()
+        for d in config[section]:
+            res[section][d] = convertType(config[section][d])
+
+    return res
+
+
+def getConfigFromFile(_configFile):
+    file = definitions.getRootDir() + _configFile
+    config = configparser.ConfigParser()
+    config.read(file, encoding='utf-8')
+
+    return config
 
 
 if __name__ == "__main__":

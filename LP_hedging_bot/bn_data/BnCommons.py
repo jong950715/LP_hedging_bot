@@ -7,12 +7,6 @@ SYMBOL_LU = defaultdict(lambda: None)  # [ticker, market]
 MIN_FUTURE_ORDER = 5
 MaxOderBookDepth = 20
 
-'''
-Trading
-DIFF_TOL_RATE : 거래 동작하는 괴리율. 예) 5%에서 거래 동작을 원하면 값은 1.05
-SPREAD_TOL_RATE : 거래가 허가되는 최대 호가창 스프레드
-'''
-
 DIFF_TOL_RATE = 1.05
 SPREAD_TOL_RATE = 0.01
 

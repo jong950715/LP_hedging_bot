@@ -1,7 +1,7 @@
 from trading.BnTrading import Order
 from binance import AsyncClient
 import asyncio
-from config.config import getConfigKeys, getConfigPool
+from config.config import getConfigKeys, getConfigPools
 from bn_data.BnExInfo import BnExInfo
 
 

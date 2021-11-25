@@ -9,12 +9,15 @@ from trading.enums import VAL_OPTION
 from config.config import getConfigKeys
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from view.MyLogger import MyLogger
+from common.createTask import createTask
 
 
 class BnTrading(SingleTonAsyncInit):
-    async def _asyncInit(self, client: AsyncClient, configPools, bnExInfo: BnExInfo, bnBalance: BnBalance,
+    async def _asyncInit(self, client: AsyncClient, configPools, configTrading, bnExInfo: BnExInfo,
+                         bnBalance: BnBalance,
                          bnWebSocket: BnWebSocket):
         self.configPools = configPools
+        self.configTrading = configTrading
         self.orderBook = bnWebSocket.getOrderBook()
         self.balance = bnBalance.getBalance()
         self.orderInfo = await bnExInfo.getOrderInfo()
@@ -38,8 +41,6 @@ class BnTrading(SingleTonAsyncInit):
 
     async def order(self, sym, price, qty):
         # print("order : ", sym, price, qty)
-        self.logger.info("#ORDER#\n sym : %s\n p : %f\n q : %f" % (sym, price, qty))
-        await asyncio.sleep(0)
         order = Order(self.cli, self.orderInfo, sym, price, qty)
         await order.execute()
 
@@ -85,9 +86,9 @@ class BnTrading(SingleTonAsyncInit):
         if n == amt:
             return 1.0
         if n == 0.0:
-            return n / amt if amt > n else (DIFF_TOL_RATE + 1.0)
+            return 0.0 if amt > n else 100.0
         if amt == 0.0:
-            return (DIFF_TOL_RATE + 1.0) if amt > n else amt / n
+            return 100.0 if amt > n else 0.0
         return n / amt if amt > n else amt / n
 
     def generateOrderList(self):
@@ -100,8 +101,8 @@ class BnTrading(SingleTonAsyncInit):
 
             diffRate = self.getDiffRate(n, amt)
             spreadRate = self.getSpreadRate(sym)
-
-            if (diffRate > DIFF_TOL_RATE) and (spreadRate < SPREAD_TOL_RATE):
+            if (diffRate > self.configTrading['config']['diff_tol_rate']) and (
+                    spreadRate < self.configTrading['config']['spread_tol_rate']):
                 qty = n - amt
                 price = float(self.orderBook[sym]['bid'][0][0]) if qty > 0 else float(self.orderBook[sym]['ask'][0][0])
                 # tasks.append(asyncio.create_task(self.order(sym, price, qty)))
@@ -110,9 +111,9 @@ class BnTrading(SingleTonAsyncInit):
         return orders
 
     async def submitOrders(self, orders):
-        tasks = [asyncio.create_task(asyncio.sleep(0))]  # empty tasks
+        tasks = [createTask(asyncio.sleep(0))]  # empty tasks
         for o in orders:
-            tasks.append(asyncio.create_task(self.order(*o)))  # o = (sym, price, qty)
+            tasks.append(createTask(self.order(*o)))  # o = (sym, price, qty)
 
         returns, pending = await asyncio.wait(tasks)
 
@@ -120,9 +121,9 @@ class BnTrading(SingleTonAsyncInit):
         pass
 
     async def cancelOrders(self, orders):
-        tasks = [asyncio.create_task(asyncio.sleep(0))]  # empty tasks
+        tasks = [createTask(asyncio.sleep(0))]  # empty tasks
         for sym, price, qty in orders:
-            tasks.append(asyncio.create_task(self.cli.futures_cancel_all_open_orders(symbol=sym)))
+            tasks.append(createTask(self.cli.futures_cancel_all_open_orders(symbol=sym)))
 
         returns, pending = await asyncio.wait(tasks)
 
@@ -140,7 +141,6 @@ class BnTrading(SingleTonAsyncInit):
                 await self.cancelOrders(orders)
 
 
-
 class Order:
     def __init__(self, client: AsyncClient, orderInfo, sym, price, qty):
         # Do use decimal!
@@ -152,7 +152,7 @@ class Order:
         self.priceStep = Decimal(self.orderInfo[self.sym]['priceStep'])
         self.qtyStep = Decimal(self.orderInfo[self.sym]['qtyStep'])
         self.minValue = Decimal(self.orderInfo[self.sym]['minValue'])
-        self.error = None
+        self.error = 0x00
 
     def validate(self):
         # 가격 step, 수량 step, 최소 주문금액, 최소 주문량
@@ -163,15 +163,22 @@ class Order:
                 self.priceStep) + '\n =====가격 정밀도 에러=====\n'
             raise Exception(message)
         if self.qty % self.qtyStep != 0:
-            message = "\n\n =====수량 정밀도 에러===== \n qty : " + str(self.qty) + "\n qtyStep : " + str(
-                self.qtyStep) + '\n =====수량 정밀도 에러=====\n '
+            message = ('\n\n =====수량 정밀도 에러====='
+                       '\n sym : {0}'
+                       '\n qty : {1}'
+                       '\n qtyStep : {2}'
+                       '\n =====수량 정밀도 에러=====\n '
+                       .format(self.sym, self.qty, self.qtyStep))
             raise Exception(message)
         if abs(self.qty * self.price) < self.minValue:
-            message = '\n\n =====주문금액 작아서 에러===== \n qty*price = ' + str(
-                self.qty * self.price) + '\n =====주문금액 작아서 에러=====\n'
-            # raise Exception(message)
-            MyLogger.getInsSync().getLogger().warning(message)
-            self.error = 111
+            self.error |= 0x01
+            if MyLogger.getInsSync().checkFlags('{0}minValue'.format(self.sym)) is False:
+                message = ('\n\n =====주문금액 작아서 에러===== '
+                           '\n sym : {0} '
+                           '\n qty*price : {1} '
+                           '\n =====주문금액 작아서 에러=====\n'
+                           .format(self.sym, self.qty * self.price))
+                MyLogger.getInsSync().getLogger().warning(message)
 
     def fitByRound(self):
         # 가격 step, 수량 step에 대해 반올림 --> 주문금액, 주문량 나옴
@@ -181,12 +188,23 @@ class Order:
         self.validate()
 
     async def buy(self):
-        res = await self.cli.futures_create_order(symbol=self.sym, price=self.price, quantity=self.qty, side='BUY',
+        res = await self.cli.futures_create_order(symbol=self.sym, price=self.price,
+                                                  quantity=self.qty, side='BUY',
                                                   type='LIMIT', timeInForce='GTC')
+        self.logOrder()
 
     async def sell(self):
-        res = await self.cli.futures_create_order(symbol=self.sym, price=self.price, quantity=-self.qty, side='SELL',
+        res = await self.cli.futures_create_order(symbol=self.sym, price=self.price,
+                                                  quantity=-self.qty, side='SELL',
                                                   type='LIMIT', timeInForce='GTC')
+        self.logOrder()
+
+    def logOrder(self):
+        MyLogger.getInsSync().getLogger().info(
+            '#ORDER#'
+            '\n sym : %s'
+            '\n p : %f'
+            '\n q : %f' % (self.sym, self.price, self.qty))
 
     async def execute(self, valOp: VAL_OPTION = VAL_OPTION.FIT_BY_ROUND):
         # 검증
@@ -198,6 +216,7 @@ class Order:
         # 실행
         if self.error:
             return
+
         if self.qty > 0:
             await self.buy()
         elif self.qty < 0:

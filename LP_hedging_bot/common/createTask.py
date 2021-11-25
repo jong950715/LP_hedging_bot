@@ -16,5 +16,5 @@ def _handle_task_result(task: asyncio.Task) -> None:
         pass  # Task cancellation should not be logged as an error.
     except Exception as e:
         emsg = traceback.format_exc()
-        MyLogger.MyLogger.getInsSync().getLogger().error(emsg)
+        MyLogger.MyLogger.getInsSync().getLogger().error('\n\n##프로그램 종료됨##\n\n'+emsg)
         exit()

@@ -14,6 +14,7 @@ LOGGER_NAME = 'myLogger'
 LOGGER_LEVEL = logging.DEBUG
 LOG_FILE_NAME = 'AutoHedgeBot'
 EAGER_THREASHOLD = 35
+MIN_VALUE_PERIOD = 90
 
 
 class MyFileHandler(logging.Handler):
@@ -83,8 +84,11 @@ class MyLogger(SingleTonAsyncInit):
         return self.logger
 
     def defaultFlag(self):
-        self.timer[self.defaultPeriod][1].add(self.newKey)
-        return [False, self.defaultPeriod]
+        defaultPeriod = self.defaultPeriod
+        if 'minValue' in self.newKey:
+            defaultPeriod = MIN_VALUE_PERIOD/self.basePeriod
+        self.timer[defaultPeriod][1].add(self.newKey)
+        return [False, defaultPeriod]
 
     def accessFlags(self, key):
         self.newKey = key

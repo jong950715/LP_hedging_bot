@@ -987,3 +987,57 @@ TypeError: 'bool' object is not subscriptable
  =====주문금액 작아서 에러=====
  
 	 >> File "BnTrading.py", line 181, in BnTrading
+2021-11-25 18:20:23,681 ##WARNING## : 
+	 
+
+ =====주문금액 작아서 에러===== 
+ sym : FTMUSDT 
+ qty*price : 2.478900 
+ =====주문금액 작아서 에러=====
+ 
+	 >> File "BnTrading.py", line 181, in BnTrading
+2021-11-25 18:20:23,681 ##WARNING## : 
+	 
+
+ =====주문금액 작아서 에러===== 
+ sym : TRXUSDT 
+ qty*price : -2.74204 
+ =====주문금액 작아서 에러=====
+ 
+	 >> File "BnTrading.py", line 181, in BnTrading
+2021-11-25 18:21:55,311 ##WARNING## : 
+	 
+
+ =====주문금액 작아서 에러===== 
+ sym : FTMUSDT 
+ qty*price : 2.480000 
+ =====주문금액 작아서 에러=====
+ 
+	 >> File "BnTrading.py", line 181, in BnTrading
+2021-11-25 18:21:55,311 ##WARNING## : 
+	 
+
+ =====주문금액 작아서 에러===== 
+ sym : TRXUSDT 
+ qty*price : -2.64789 
+ =====주문금액 작아서 에러=====
+ 
+	 >> File "BnTrading.py", line 181, in BnTrading
+2021-11-25 18:23:23,883 ##WARNING## : 
+	 
+
+ =====주문금액 작아서 에러===== 
+ sym : FTMUSDT 
+ qty*price : 2.487030 
+ =====주문금액 작아서 에러=====
+ 
+	 >> File "BnTrading.py", line 181, in BnTrading
+2021-11-25 18:23:23,883 ##WARNING## : 
+	 
+
+ =====주문금액 작아서 에러===== 
+ sym : TRXUSDT 
+ qty*price : -2.74624 
+ =====주문금액 작아서 에러=====
+ 
+	 >> File "BnTrading.py", line 181, in BnTrading

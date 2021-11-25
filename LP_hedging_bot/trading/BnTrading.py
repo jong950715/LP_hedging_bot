@@ -172,7 +172,7 @@ class Order:
             raise Exception(message)
         if abs(self.qty * self.price) < self.minValue:
             self.error |= 0x01
-            if MyLogger.getInsSync().checkFlags('{0}minValue'.format(self.sym)) is False:
+            if MyLogger.getInsSync().checkFlags('minValue{0}'.format(self.sym)) is False:
                 message = ('\n\n =====주문금액 작아서 에러===== '
                            '\n sym : {0} '
                            '\n qty*price : {1} '

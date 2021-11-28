@@ -7,30 +7,37 @@ from view.MyLogger import MyLogger
 from bn_data.BnExInfo import BnExInfo
 from bn_data.BnBalance import BnBalance
 from bn_data.BnWebSocket import BnWebSocket
-from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger
+from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger, getConfigScheduler
 from common.createTask import createTask
-
+from common.MyScheduler import MyScheduler
 import asyncio
 import sys
 import platform
 
 
 async def main():
+    # layer 0
     configPools = getConfigPools()
     configKeys = getConfigKeys()
     configTrading = getConfigTrading()
     configLogger = getConfigLogger()
+    configScheduler = getConfigScheduler()
     configs = {'configPools': configPools, 'configKeys': configKeys,
-               'configTrading': configTrading, 'configLogger': configLogger}
+               'configTrading': configTrading, 'configLogger': configLogger, 'configScheduler': configScheduler}
     symbols = getSymbolsFromPools(configPools)
 
     # 객체 생성, 의존성 주입
+
+    # layer0.5
+    myScheduler = await MyScheduler.createIns(configScheduler)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
+
     # layer1
     client = await AsyncClient.create(configKeys['binance']['api_key'], configKeys['binance']['secret_key'])
-    myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id'], configs)
+    myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id']
+                                            , configs)
 
     # layer1.5
-    myLogger = await MyLogger.createIns(myTelegram, configLogger)  # global
+    myLogger = await MyLogger.createIns(myTelegram, configLogger)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
 
     # layer2
     bnBalance = await BnBalance.createIns(client, symbols)
@@ -39,8 +46,7 @@ async def main():
 
     # layer3
     bnTrading = await BnTrading.createIns(client, configPools=configPools, configTrading=configTrading,
-                                          bnExInfo=bnExInfo, bnBalance=bnBalance,
-                                          bnWebSocket=bnWebSocket)
+                                          bnExInfo=bnExInfo, bnBalance=bnBalance, bnWebSocket=bnWebSocket)
     myConsole = MyConsole(bnBalance=bnBalance, bnWebSocket=bnWebSocket, symbols=symbols)
 
     for symbol in symbols:
@@ -48,6 +54,7 @@ async def main():
 
     tasks = []
     try:
+        tasks.append(createTask(myScheduler.run()))
         tasks.append(createTask(myTelegram.run()))
         tasks.append(createTask(myLogger.run()))
         tasks.append(createTask(bnWebSocket.run()))

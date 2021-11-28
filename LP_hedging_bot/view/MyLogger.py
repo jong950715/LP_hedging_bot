@@ -66,7 +66,7 @@ class MyLogger(SingleTonAsyncInit):
             '\n\t >> File "%(filename)s", line %(lineno)s, in %(module)s\n\n')
 
         self.consoleHandler = logging.StreamHandler()
-        self.fileHandler = MyFileHandler(filename = getRootDir() + LOG_FILE_NAME)
+        self.fileHandler = MyFileHandler(filename=getRootDir() + LOG_FILE_NAME)
         self.teleHandler = TeleGramHandler(myTelegram)
 
         self.handlers = [self.consoleHandler, self.fileHandler, self.teleHandler]
@@ -75,64 +75,14 @@ class MyLogger(SingleTonAsyncInit):
             h.setFormatter(formatter)
             self.logger.addHandler(h)
 
-        # flags에 직접 접근 절대 금지
-        self.flags = defaultdict(lambda: self.defaultNewFlag())  # flags['name'] = [flag, period]
-        self.timer = defaultdict(lambda: [[0], set()])  # timer[period] = [[cnt], names]
-
     def getLogger(self):
         return self.logger
-
-    def defaultNewFlag(self):
-        newPeriod = self.config['config']['default_period'] / self.config['config']['base_period']
-        if 'minValue' in self.newKey:
-            newPeriod = self.config['config']['min_value_period']/self.config['config']['base_period']
-        self.timer[newPeriod][1].add(self.newKey)
-        return [False, newPeriod]
-
-    def accessFlags(self, key):
-        self.newKey = key
-        return self.flags[key]
-
-    def checkFlags(self, flagName):
-        res = self.accessFlags(flagName)[0]
-        self.accessFlags(flagName)[0] = True
-        return res
-
-    def warningWithFlag(self, msg, flagName):
-        if self.checkFlags(flagName):
-            return
-        self.logger.warning(msg)
-
-    def setFlagNameInPeriod(self, flagName, newPeriod):
-        self.setPeriodOfFlagName(flagName, newPeriod)
-
-    def setPeriodOfFlagName(self, flagName, newPeriod):
-        newPeriod = newPeriod / self.config['config']['base_period']
-        oldPeriod = self.accessFlags(flagName)[1]
-        self.accessFlags(flagName)[1] = newPeriod
-
-        names = self.timer[oldPeriod][1]
-        names.remove(flagName)
-
-        self.timer[newPeriod][1].add(flagName)
-
-    def resetFlags(self, names):
-        for name in names:
-            self.flags[name][0] = False
-
-    def scheduler(self):
-        for period, (cnt, names) in self.timer.items():
-            cnt[0] += 1
-            if period <= cnt[0]:
-                cnt[0] = 0
-                self.resetFlags(names)
 
     async def run(self):
         # flush every 10seconds
         while True:
             await asyncio.sleep(self.config['config']['base_period'])
             self.fileHandler.myFlush()
-            self.scheduler()
 
 
 async def example():

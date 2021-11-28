@@ -5,10 +5,12 @@ CONFIG_KEYS = '{0}/config/config_keys.ini'.format(getRootDir())
 CONFIG_POOLS = '{0}/config/config_pools.ini'.format(getRootDir())
 CONFIG_TRADING = '{0}/config/config_trading.ini'.format(getRootDir())
 CONFIG_LOGGER = '{0}/config/config_logger.ini'.format(getRootDir())
+CONFIG_SCHEDULER = '{0}/config/config_scheduler.ini'.format(getRootDir())
 CONFIG_FILE_NAME = {'configKeys': CONFIG_KEYS,
                     'configPools': CONFIG_POOLS,
                     'configTrading': CONFIG_TRADING,
-                    'configLogger': CONFIG_LOGGER}
+                    'configLogger': CONFIG_LOGGER,
+                    'configScheduler': CONFIG_SCHEDULER}
 '''
 ini는 대소문자 안가림
 '''
@@ -53,6 +55,10 @@ def getConfigTrading():
 
 def getConfigLogger():
     return getConfigFromFileFitType(CONFIG_LOGGER)
+
+
+def getConfigScheduler():
+    return getConfigFromFileFitType(CONFIG_SCHEDULER)
 
 
 def getConfigFromFile(_configFile):

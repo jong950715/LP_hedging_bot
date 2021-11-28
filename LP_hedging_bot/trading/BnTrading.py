@@ -10,6 +10,7 @@ from config.config import getConfigKeys
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from view.MyLogger import MyLogger
 from common.createTask import createTask
+from common.MyScheduler import MyScheduler
 
 
 class BnTrading(SingleTonAsyncInit):
@@ -141,6 +142,10 @@ class BnTrading(SingleTonAsyncInit):
                 await asyncio.sleep(3)
                 await self.cancelOrders(orders)
 
+            if MyScheduler.getInsSync().checkFlags('minValue{0}'.format('ftmusdt')) is False:
+                MyLogger.getInsSync().getLogger().warning('scheduler test')
+
+
 
 class Order:
     def __init__(self, client: AsyncClient, orderInfo, sym, price, qty):
@@ -173,7 +178,7 @@ class Order:
             raise Exception(message)
         if abs(self.qty * self.price) < self.minValue:
             self.error |= 0x01
-            if MyLogger.getInsSync().checkFlags('minValue{0}'.format(self.sym)) is False:
+            if MyScheduler.getInsSync().checkFlags('minValue{0}'.format(self.sym)) is False:
                 message = (' =====주문금액 작아서 에러===== '
                            '\n sym : {0} '
                            '\n qty*price : {1} '

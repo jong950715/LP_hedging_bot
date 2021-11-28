@@ -4,6 +4,7 @@ import json
 from collections import defaultdict
 from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
+from config.config import getConfigKeys
 import time
 
 
@@ -61,45 +62,20 @@ class BnBalance(SingleTonAsyncInit):
 
 
 async def main():
-    client = await AsyncClient.create(api_key, api_secret)
-    # client.futures_cancel_all_open_orders(symbol='trxusdt')
-    # client.futures_cancel_all_open_orders(symbol='')
+    configKeys = getConfigKeys()
+    client = await AsyncClient.create(configKeys['binance']['api_key'], configKeys['binance']['secret_key'])
+    res1 = await client.futures_position_information()
+    print(res1)
+    res2 = await client.futures_position_information(symbol='trxusdt')
+    print(res2)
+    res3 = await client.futures_account()
+    print(res3)
+    res4 = await client.futures_account_balance()
+    print(res4)
+    res5 = await client.futures_leverage_bracket()
+    print(res5)
 
-    time.sleep(1)
-    return
-
-    bnBalance = BnBalance(client)
-    bnBalance.addSymbol("TRXUSDT")
-    bnBalance.addSymbol("BTCUSDT")
-    await bnBalance.updateBalance()
     await client.close_connection()
-    return
-
-    res = await client.futures_account_balance()
-    # print(json.dumps(res, indent=2))
-    param = dict()
-    symbols = ['TRXUSDT']
-
-    # param['symbol'] = symbol
-    # res = await client.futures_position_information(**param)
-    # res = await client.futures_position_information(symbol=symbol)
-
-    # loop = asyncio.get_running_loop()
-
-    tasks = [asyncio.create_task(client.futures_position_information(symbol=symbol)) for symbol in symbols]
-    fins, un = await asyncio.wait(tasks)
-    for fin in fins:
-        print(fin.result())
-
-    # print(json.dumps(res, indent=2))
-    await client.close_connection()
-
-
-async def test():
-    client = await AsyncClient.create(api_key, api_secret)
-    # res = await client.futures_coin_exchange_info()
-    res = await  client.futures_position_information(symbol='TRXUSDT', recvWindow=715)
-    print(res)
 
 
 if __name__ == "__main__":

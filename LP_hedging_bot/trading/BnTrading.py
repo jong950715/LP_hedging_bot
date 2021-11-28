@@ -142,9 +142,6 @@ class BnTrading(SingleTonAsyncInit):
                 await asyncio.sleep(3)
                 await self.cancelOrders(orders)
 
-            if MyScheduler.getInsSync().checkFlags('minValue{0}'.format('ftmusdt')) is False:
-                MyLogger.getInsSync().getLogger().warning('scheduler test')
-
 
 
 class Order:

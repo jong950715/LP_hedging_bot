@@ -81,7 +81,7 @@ class MyLogger(SingleTonAsyncInit):
     async def run(self):
         # flush every 10seconds
         while True:
-            await asyncio.sleep(self.config['config']['base_period'])
+            await asyncio.sleep(self.config['config']['flush_period'])
             self.fileHandler.myFlush()
 
 

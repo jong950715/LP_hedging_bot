@@ -11,7 +11,6 @@ from bn_data.BnSpWebSocket import BnSpWebSocket
 from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger, getConfigScheduler
 from common.createTask import createTask
 from common.MyScheduler import MyScheduler
-from view.MyMonitor import MyMonitor
 from config.MyConfig import MyConfig
 import asyncio
 import sys
@@ -60,7 +59,9 @@ async def main():
 
     # layer4
     myConsole = MyConsole(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnTrading=bnTrading, symbols=symbols)
-    myMonitor = await MyMonitor.createIns(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, symbols=symbols, flagGui=flagGui)
+    if flagGui:
+        from view.MyMonitor import MyMonitor
+        myMonitor = await MyMonitor.createIns(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, symbols=symbols, flagGui=flagGui)
 
     for symbol in symbols:
         bnFtWebSocket.addStream(symbol.lower() + '@depth5@100ms')  # "ftmusdt@depth5@500ms"
@@ -79,9 +80,9 @@ async def main():
 
         tasks.append(createTask(bnTrading.run()))
 
+        tasks.append(createTask(myConsole.run()))
         if flagGui:
-            tasks.append(createTask(myConsole.run()))
-        tasks.append(createTask(myMonitor.run()))
+            tasks.append(createTask(myMonitor.run()))
         await asyncio.wait(tasks)
     except Exception as e:
         print(e)

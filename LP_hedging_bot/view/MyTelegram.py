@@ -8,16 +8,17 @@ from telegram import Bot as SyncBot
 from collections import deque
 from common.createTask import *
 from config.config import *
+from config.MyConfig import MyConfig
 
 
 class MyTelegram(SingleTonAsyncInit):
-    async def _asyncInit(self, apiToken, chatId: int, configs):
+    async def _asyncInit(self, apiToken, chatId: int, myConfig: MyConfig):
         self.bot = Bot(apiToken)
         self.syncBot = SyncBot(apiToken)
         self.chatId = chatId
         self.sendQue = deque()
         self.latest = 0
-        self.configs = configs
+        self.myConfig = myConfig
 
         self.findFunction = re.compile('(^[\w]*)\(')
         self.findParens = re.compile('^[\w]*(\([^()]*\))')
@@ -77,28 +78,11 @@ class MyTelegram(SingleTonAsyncInit):
                          .format(func, paren, params))
         if func and paren:
             self.processCommand(func, params)
+        else:
+            self.sendMessage('잘못된 형식')
 
     def processCommand(self, func, params):
-        if (func.lower() == 'showConfigs'.lower()) or (func.lower() == 'showAllConfig'.lower()):
-            self.sendMessage(json.dumps(self.configs, sort_keys=False, indent=4))
-
-        if (func.lower() == 'showConfig'.lower()) or (func.lower() == 'getConfig'.lower()):
-            con = self.configs
-            for param in params:
-                con = con[param]
-            self.sendMessage(json.dumps(con, sort_keys=False, indent=4))
-
-        if func.lower() == 'setConfig'.lower():
-            if len(params) != 4:
-                self.sendMessage('인자가 4개 이어야 합니다.')
-                return
-            self.configs[params[0]][params[1]][params[2]] = convertType(params[3])
-            config = getConfigFromFile(CONFIG_FILE_NAME[params[0]])
-            config.set(params[1], params[2], params[3])
-            with open(CONFIG_FILE_NAME[params[0]], 'w') as configFile:
-                config.write(configFile)
-            msg = '[{0}][{1}][{2}]가 {3}로 변경되었습니다.'.format(params[0], params[1], params[2], params[3])
-            self.sendMessage(msg)
+        self.sendMessage(self.myConfig.processCommand(func, params))
 
     async def run(self):
         await self.checkLatest()

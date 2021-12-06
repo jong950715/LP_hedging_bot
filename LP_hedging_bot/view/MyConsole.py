@@ -44,8 +44,6 @@ class MyConsole():
             triggerRate = '{:.3f}%'.format((self.tradingData[sym]['triggerRate']) * 100)
             tb.add_row([tic, amt, bid, triggerRate])
 
-
-
         return 'LiqPercent: {0:.2f}%\n{1:}'.format(self.bnBalance.getLiqPercent(), tb)
 
     async def run(self):

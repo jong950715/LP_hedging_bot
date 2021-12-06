@@ -32,17 +32,7 @@ def config_read(config_file):
 
 
 def getConfigKeys():
-    config = getConfigFromFile(CONFIG_KEYS)
-
-    res = dict()
-    for section in config.sections():
-        res[section] = dict()
-        for d in config[section]:
-            res[section][d] = config[section][d]
-
-    res['telegram']['chat_id'] = int(res['telegram']['chat_id'])
-
-    return res
+    return getConfigFromFileFitType(CONFIG_KEYS)
 
 
 def getConfigPools():
@@ -61,7 +51,7 @@ def getConfigScheduler():
     return getConfigFromFileFitType(CONFIG_SCHEDULER)
 
 
-def getConfigFromFile(_configFile):
+def _getConfigFromFile(_configFile):
     file = _configFile
     config = configparser.ConfigParser()
     config.read(file, encoding='utf-8')
@@ -70,7 +60,7 @@ def getConfigFromFile(_configFile):
 
 
 def getConfigFromFileFitType(_configFile):
-    config = getConfigFromFile(_configFile)
+    config = _getConfigFromFile(_configFile)
 
     res = dict()
     for section in config.sections():

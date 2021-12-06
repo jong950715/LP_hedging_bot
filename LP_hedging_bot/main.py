@@ -12,6 +12,7 @@ from config.config import getConfigKeys, getConfigPools, getConfigTrading, getCo
 from common.createTask import createTask
 from common.MyScheduler import MyScheduler
 from view.MyMonitor import MyMonitor
+from config.MyConfig import MyConfig
 import asyncio
 import sys
 import platform
@@ -24,11 +25,12 @@ async def main():
         flagGui = False
 
     # layer 0
-    configPools = getConfigPools()
-    configKeys = getConfigKeys()
-    configTrading = getConfigTrading()
-    configLogger = getConfigLogger()
-    configScheduler = getConfigScheduler()
+    myConfig = await MyConfig.createIns()
+    configPools = myConfig.getConfig('configPools')
+    configKeys = myConfig.getConfig('configKeys')
+    configTrading = myConfig.getConfig('configTrading')
+    configLogger = myConfig.getConfig('configLogger')
+    configScheduler = myConfig.getConfig('configScheduler')
     configs = {'configPools': configPools, 'configKeys': configKeys,
                'configTrading': configTrading, 'configLogger': configLogger, 'configScheduler': configScheduler}
     symbols = getSymbolsFromPools(configPools)
@@ -41,7 +43,7 @@ async def main():
     # layer1
     client = await AsyncClient.create(configKeys['binance']['api_key'], configKeys['binance']['secret_key'])
     myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id']
-                                            , configs)
+                                            , myConfig)
 
     # layer1.5
     myLogger = await MyLogger.createIns(myTelegram, configLogger)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로

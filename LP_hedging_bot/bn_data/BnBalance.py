@@ -57,8 +57,10 @@ class BnBalance(SingleTonAsyncInit):
             liqP = float(msg['liquidationPrice'])
             mkP = float(msg['markPrice'])
             notional = float(msg['notional'])
-
-            netSum += (liqP / mkP - 1) * notional
+            try:
+                netSum += (liqP / mkP - 1) * notional
+            except ZeroDivisionError as e:
+                netSum += 0
             notionalSum += notional
 
         self.liqPercent = safeDivide(safeDivide(netSum, notionalSum), len(returns)) * 100

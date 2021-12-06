@@ -15,7 +15,7 @@ class BnWebSocket(SingleTonAsyncInit):
         self.symbols = []
         self.fiats = FIATS
         # self.orderBook['symbol']['ask'] = [['price', 'qty'], ['price', 'qty'], ['price', 'qty'], ...] bid = want to buy, ask = want to sell
-        self.orderBook = defaultdict(lambda: defaultdict(lambda: [[None, None]] * MaxOderBookDepth))
+        self.orderBook = defaultdict(lambda: defaultdict(lambda: [[0, 0]] * MaxOderBookDepth))
         self.setFiatsOrderBook()
         self.symbols = symbols
 

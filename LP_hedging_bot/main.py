@@ -10,6 +10,7 @@ from bn_data.BnWebSocket import BnWebSocket
 from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger, getConfigScheduler
 from common.createTask import createTask
 from common.MyScheduler import MyScheduler
+from view.MyGui import MyGui
 import asyncio
 import sys
 import platform
@@ -47,7 +48,10 @@ async def main():
     # layer3
     bnTrading = await BnTrading.createIns(client, configPools=configPools, configTrading=configTrading,
                                           bnExInfo=bnExInfo, bnBalance=bnBalance, bnWebSocket=bnWebSocket)
+
+    # layer4
     myConsole = MyConsole(bnBalance=bnBalance, bnWebSocket=bnWebSocket, symbols=symbols)
+    myGui = await MyGui.createIns(bnBalance=bnBalance, bnWebSocket=bnWebSocket, bnTrading=bnTrading, symbols=symbols)
 
     for symbol in symbols:
         bnWebSocket.addStream(symbol.lower() + '@depth5@100ms')  # "ftmusdt@depth5@500ms"
@@ -57,12 +61,16 @@ async def main():
         tasks.append(createTask(myScheduler.run()))
         tasks.append(createTask(myTelegram.run()))
         tasks.append(createTask(myLogger.run()))
-        tasks.append(createTask(bnWebSocket.run()))
+
         tasks.append(createTask(bnBalance.run()))
+        tasks.append(createTask(bnWebSocket.run()))
         tasks.append(createTask(bnExInfo.run()))
+
+        tasks.append(createTask(bnTrading.run()))
+
         if platform.system() == 'Windows' or platform.system() == 'Darwin':
             tasks.append(createTask(myConsole.run()))
-        tasks.append(createTask(bnTrading.run()))
+            tasks.append(createTask(myGui.run()))
         await asyncio.wait(tasks)
     except Exception as e:
         print(e)

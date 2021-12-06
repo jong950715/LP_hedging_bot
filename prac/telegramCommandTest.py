@@ -48,5 +48,5 @@ c1 = 'show configs'
 c2 = 'set config\n[configPools][pool2][sym1][300000]'
 c3 = 'setConfig(hi, myy, 34)'
 c4 = 'showConfigs()'
-# test(c2)
+# prac(c2)
 test2(c4)

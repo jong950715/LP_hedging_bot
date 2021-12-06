@@ -5,6 +5,7 @@ from collections import defaultdict
 from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from config.config import getConfigKeys
+from common.safeDivide import safeDivide
 import time
 
 
@@ -16,6 +17,7 @@ class BnBalance(SingleTonAsyncInit):
         self.prev = 0
         self.flagUpdated = False
         self.symbols = symbols
+        self.liqPercent = 0
 
     def addSymbol(self, s):
         self.symbols.append(s)
@@ -42,23 +44,34 @@ class BnBalance(SingleTonAsyncInit):
         tasks = [asyncio.create_task(self.cli.futures_position_information(symbol=symbol)) for symbol in
                  self.symbols]
         returns, pending = await asyncio.wait(tasks)
+        netSum = 0.0
+        notionalSum = 0.0
         for ret in returns:
             msg = ret.result()[0]
 
             sym = msg['symbol']
-            tic, market = symbolToTickerMarket(sym)
             amt = msg['positionAmt']
             self.balance[sym] = amt
-            # print(sym, tic, amt)
+
+            # 담보비율
+            liqP = float(msg['liquidationPrice'])
+            mkP = float(msg['markPrice'])
+            notional = float(msg['notional'])
+
+            netSum += (liqP / mkP - 1) * notional
+            notionalSum += notional
+
+        self.liqPercent = safeDivide(safeDivide(netSum, notionalSum), len(returns)) * 100
+
+    def getLiqPercent(self):
+        return self.liqPercent
+
 
     async def run(self):
         while True:
             await self.updateBalance()
             self.setFlagUpdate()
             await asyncio.sleep(0.08)
-            now = time.time()
-            # print("balance : " + str(now - self.prev))
-            self.prev = now
 
 
 async def main():
@@ -81,4 +94,4 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
-    # loop.run_until_complete(test())
+    # loop.run_until_complete(prac())

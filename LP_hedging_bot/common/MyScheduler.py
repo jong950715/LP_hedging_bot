@@ -1,6 +1,8 @@
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 import asyncio
 from collections import defaultdict
+from config.config import getConfigScheduler
+# from common.createTask import createTask
 import schedule  # 기능은 파워풀하지만, 너무 무거움. 매 task 마다 시간 계속비교하고.. AWS free tier 를 위해 자작으로 최적화 ㄱㄱ
 
 
@@ -46,7 +48,8 @@ class MyScheduler(SingleTonAsyncInit):
         self.accessFlags(flagName)[1] = newPeriod
 
         names = self.timer[oldPeriod][1]
-        names.remove(flagName)
+        if flagName in names:
+            names.remove(flagName)
 
         self.timer[newPeriod][1].add(flagName)
 
@@ -71,3 +74,45 @@ class MyScheduler(SingleTonAsyncInit):
         while True:
             await asyncio.sleep(self.config['config']['base_period'])
             self.scheduler()
+
+
+async def myScheduleExample1():
+    configScheduler = getConfigScheduler()
+    myScheduler = await MyScheduler.createIns(configScheduler)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
+
+    tasks = []
+    tasks.append(asyncio.create_task(myScheduler.run()))
+    tasks.append(asyncio.create_task(_myScheduleExample1()))
+    await asyncio.wait(tasks)
+
+
+async def _myScheduleExample1():
+    while True:
+        if MyScheduler.getInsSync().checkFlags('flagType{0}'.format('flagParam')) is False:
+            print('do something')
+
+        await asyncio.sleep(0.1)
+
+
+async def myScheduleExample2():
+    configScheduler = getConfigScheduler()
+    myScheduler = await MyScheduler.createIns(configScheduler)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
+    customPeriod = 10
+    MyScheduler.getInsSync().setPeriodOfFlagName('customFlagName', customPeriod)
+
+    tasks = []
+    tasks.append(asyncio.create_task(myScheduler.run()))
+    tasks.append(asyncio.create_task(_myScheduleExample2()))
+    await asyncio.wait(tasks)
+
+
+async def _myScheduleExample2():
+    while True:
+        if MyScheduler.getInsSync().checkFlags('customFlagName') is False:
+            print('do something')
+
+        await asyncio.sleep(0.1)
+
+
+if __name__ == '__main__':
+    asyncio.get_event_loop().run_until_complete(myScheduleExample2())

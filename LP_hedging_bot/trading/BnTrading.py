@@ -35,10 +35,15 @@ class BnTrading(SingleTonAsyncInit):
 
         self.logger = MyLogger.getInsSync().getLogger()
 
+        self.exportData = defaultdict(lambda: defaultdict(lambda: 0.0))
+
         # 메소드 입양 (클래스의 메소드가 아니라 인스턴스의 메소드가 넘어오긴하는데 가독성 측면에서 안티코드는 아닌지 고민필요)
         # 인스턴스 자체를 입양하면 접근성에 대한 보호가 사라져서 제한적으로 가져오고 싶은 마음에 짜인 코드임
         # self.isOrderBookUpdated = bnWebSocket.isOrderBookUpdated
         # self.resetFlagOrderBookUpdate = bnWebSocket.resetFlagOrderBookUpdate
+
+    def getExportData(self):
+        return self.exportData
 
     async def order(self, sym, price, qty):
         # print("order : ", sym, price, qty)
@@ -102,6 +107,8 @@ class BnTrading(SingleTonAsyncInit):
 
             diffRate = self.getDiffRate(n, amt)
             spreadRate = self.getSpreadRate(sym)
+            self.exportData[sym]['diffRate'] = diffRate
+            self.exportData[sym]['spreadRate'] = spreadRate
             if (diffRate > self.configTrading['config']['diff_tol_rate']) and (
                     spreadRate < self.configTrading['config']['spread_tol_rate']):
                 qty = n - amt

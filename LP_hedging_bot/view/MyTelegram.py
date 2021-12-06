@@ -6,7 +6,7 @@ from common.SingleTonAsyncInit import SingleTonAsyncInit
 from aiogram import Bot
 from telegram import Bot as SyncBot
 from collections import deque
-from common.createTask import createTask
+from common.createTask import *
 from config.config import *
 
 

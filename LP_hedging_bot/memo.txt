@@ -6,10 +6,8 @@
 - Decimal 최적화
 
 - 청산 위험도 알림
-- SPOT과 괴리율
-- runnig 알림
 
-- 거래판단기준 spot으로 바꾸기 (오더 기준은 퓨쳐스)
+- runnig 알림
 
 - config 따로 class로 관리하기 (수정 등 때문에 안에서 관리하는게 맞음, pool 추가에 따라 symbol이 추가된다면?)
 

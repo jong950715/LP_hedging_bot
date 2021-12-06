@@ -2,17 +2,19 @@ import tkinter.ttk
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 import asyncio
 from collections import defaultdict
-from bn_data.BnWebSocket import BnWebSocket
+from bn_data.BnFtWebSocket import BnFtWebSocket
 from bn_data.BnBalance import BnBalance
 from trading.BnTrading import BnTrading
 
 
 class MyGui(SingleTonAsyncInit):
     async def _asyncInit(self, bnBalance: BnBalance,
-                         bnWebSocket: BnWebSocket,
+                         bnFtWebSocket: BnFtWebSocket,
+                         bnSpWebSocket,
                          bnTrading: BnTrading, symbols):
         self.symbols = symbols
-        self.orderBook = bnWebSocket.getOrderBook()
+        self.orderBookFt = bnFtWebSocket.getOrderBook()
+        self.orderBookSp = bnSpWebSocket.getOrderBook()
         self.balance = bnBalance.getBalance()
         self.tradingData = bnTrading.getExportData()
 
@@ -46,7 +48,7 @@ class MyGui(SingleTonAsyncInit):
 
     def _initTreeView(self):
         self.treeViews['common'] = self.newTreeViewByCols(['liquidation'])
-        self.treeViews['sym'] = self.newTreeViewByCols(['sym', 'price', 'amt', 'diff', 'spread'])
+        self.treeViews['sym'] = self.newTreeViewByCols(['sym', 'price', 'amt', 'trigger', 'spreadF', 'spreadS', 'diffSF'])
 
     def newTreeViewByCols(self, cols):
         treeView = tkinter.ttk.Treeview(self.root, columns=cols, show='headings')
@@ -59,20 +61,23 @@ class MyGui(SingleTonAsyncInit):
         return treeView
 
     def _runSymTreeView(self):
-        tL = [[0 for _ in range(5)] for _ in range(len(self.symbols))]
+        tL = [[0 for _ in range(7)] for _ in range(len(self.symbols))]
         for i, sym in enumerate(self.symbols):
             tL[i][0] = sym
-            tL[i][1] = self.orderBook[sym]['bid'][0][0]
+            tL[i][1] = self.orderBookFt[sym]['bid'][0][0]
             tL[i][2] = self.balance[sym]
-            tL[i][3] = '{:.3f}%'.format((self.tradingData[sym]['diffRate']-1)*100)
-            tL[i][4] = '{:.3f}%'.format(self.tradingData[sym]['spreadRate']*100)
+            tL[i][3] = '{:.3f}%'.format((self.tradingData[sym]['triggerRate'])*100)
+            tL[i][4] = '{:.3f}%'.format(self.tradingData[sym]['spreadRateFt']*100)
+            tL[i][5] = '{:.3f}%'.format(self.tradingData[sym]['spreadRateSp'] * 100)
+            tL[i][6] = '{:.3f}%'.format(self.tradingData[sym]['sfDiffRate'] * 100)
+            # tL[i][6] = self.orderBookSp[sym]['bid'][1][0] #debug
 
         self.treeLists['sym'] = tL
         self.treeLists['common'] = [[self.bnBalance.getLiqPercent()]]
 
     async def run(self):
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
             self._runSymTreeView()
             self.updateTreeView()
             self.root.update()

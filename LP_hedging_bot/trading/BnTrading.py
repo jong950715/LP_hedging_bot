@@ -3,7 +3,8 @@ from binance import AsyncClient
 from bn_data.BnCommons import *
 from decimal import Decimal
 from bn_data.BnBalance import BnBalance
-from bn_data.BnWebSocket import BnWebSocket
+from bn_data.BnFtWebSocket import BnFtWebSocket
+from bn_data.BnSpWebSocket import BnSpWebSocket
 from bn_data.BnExInfo import BnExInfo
 from trading.enums import VAL_OPTION
 from config.config import getConfigKeys
@@ -15,11 +16,11 @@ from common.MyScheduler import MyScheduler
 
 class BnTrading(SingleTonAsyncInit):
     async def _asyncInit(self, client: AsyncClient, configPools, configTrading, bnExInfo: BnExInfo,
-                         bnBalance: BnBalance,
-                         bnWebSocket: BnWebSocket):
+                         bnBalance: BnBalance, bnFtWebSocket: BnFtWebSocket, bnSpWebSocket: BnSpWebSocket):
         self.configPools = configPools
         self.configTrading = configTrading
-        self.orderBook = bnWebSocket.getOrderBook()
+        self.orderBookFt = bnFtWebSocket.getOrderBook()
+        self.orderBookSp = bnSpWebSocket.getOrderBook()
         self.balance = bnBalance.getBalance()
         self.orderInfo = await bnExInfo.getOrderInfo()
 
@@ -27,7 +28,8 @@ class BnTrading(SingleTonAsyncInit):
 
         self.bnExInfo = bnExInfo
         self.bnBalance = bnBalance
-        self.bnWebSocket = bnWebSocket
+        self.bnFtWebSocket = bnFtWebSocket
+        self.bnSpWebSocket = bnSpWebSocket
 
         self.targetBalance = defaultdict(lambda: 0)
 
@@ -63,8 +65,8 @@ class BnTrading(SingleTonAsyncInit):
 
             k = configPool['k']
 
-            p1 = (float(self.orderBook[sym1]['bid'][0][0]) + float(self.orderBook[sym1]['ask'][0][0])) / 2
-            p2 = (float(self.orderBook[sym2]['bid'][0][0]) + float(self.orderBook[sym2]['ask'][0][0])) / 2
+            p1 = (float(self.orderBookSp[sym1]['bid'][0][0]) + float(self.orderBookSp[sym1]['ask'][0][0])) / 2
+            p2 = (float(self.orderBookSp[sym2]['bid'][0][0]) + float(self.orderBookSp[sym2]['ask'][0][0])) / 2
 
             n1 = (k * p2 / p1) ** 0.5
             # n2 = (k * p1 / p2)**0.5
@@ -75,44 +77,56 @@ class BnTrading(SingleTonAsyncInit):
             if sym2 not in self.fiats:
                 self.targetBalance[sym2] += (targetAmt2 - n2)
 
-    def getSpreadRate(self, sym):
-        bid = float(self.orderBook[sym]['bid'][0][0])  # 삽니다.
-        ask = float(self.orderBook[sym]['ask'][0][0])  # 팝니다.
-        spread = ask - bid
-        centerPrice = (bid + ask) / 2
-        return spread / centerPrice
+    def getRates(self, sym):
+        bidF = float(self.orderBookFt[sym]['bid'][0][0])  # 삽니다.
+        askF = float(self.orderBookFt[sym]['ask'][0][0])  # 팝니다.
+        spreadF = askF - bidF
+        centerPriceF = (bidF + askF) / 2
 
-    def getDiffRate(self, n, amt):
+        bidS = float(self.orderBookSp[sym]['bid'][0][0])  # 삽니다.
+        askS = float(self.orderBookSp[sym]['ask'][0][0])  # 팝니다.
+        spreadS = askS - bidS
+        centerPriceS = (bidS + askS) / 2
+
+        n = self.targetBalance[sym]
+        amt = float(self.balance[sym])
+
+        return spreadF / centerPriceF, spreadS / centerPriceS, self.getDiffRate(centerPriceF, centerPriceS), self.getDiffRate(n, amt)
+
+    def getDiffRate(self, n1, n2):
         '''
-        n만 0인 경우
-        amt만 0인 경우
-        둘다 0인 경우
-        둘다 0이 아닌경우
+        무조건 양수의 비가 반환되는 함수입니다.
         '''
-        if n == amt:
+        if n1 == n2:
             return 1.0
-        if n == 0.0:
-            return 0.0 if amt > n else 100.0
-        if amt == 0.0:
-            return 100.0 if amt > n else 0.0
-        return n / amt if amt > n else amt / n
+        if n1 == 0.0 or n2 == 0.0:
+            return 999999999.9
+
+        n1 = abs(n1)
+        n2 = abs(n2)
+        return (n2 / n1 - 1.0) if n2 > n1 else (n1 / n2 - 1.0)
 
     def generateOrderList(self):
         # tasks = [asyncio.create_task(asyncio.sleep(0))] # empty tasks
 
         orders = []  # 결과물 담을 리스트
         for sym in self.targetBalance.keys():  # symbol 하나씩 순회 하면서 괴리율 점검
-            n = self.targetBalance[sym]
-            amt = float(self.balance[sym])
+            spreadRateFt, spreadRateSp, sfDiffRate, triggerRate = self.getRates(sym)
 
-            diffRate = self.getDiffRate(n, amt)
-            spreadRate = self.getSpreadRate(sym)
-            self.exportData[sym]['diffRate'] = diffRate
-            self.exportData[sym]['spreadRate'] = spreadRate
-            if (diffRate > self.configTrading['config']['diff_tol_rate']) and (
-                    spreadRate < self.configTrading['config']['spread_tol_rate']):
+            self.exportData[sym]['triggerRate'] = triggerRate
+            self.exportData[sym]['spreadRateFt'] = spreadRateFt
+            self.exportData[sym]['spreadRateSp'] = spreadRateSp
+            self.exportData[sym]['sfDiffRate'] = sfDiffRate
+
+            if (triggerRate > self.configTrading['config']['diff_trigger_rate']) and (
+                    spreadRateFt < self.configTrading['config']['futures_spread_tol_rate']) and (
+                    spreadRateSp < self.configTrading['config']['spot_spread_tol_rate']) and (
+                    sfDiffRate < self.configTrading['config']['spot_futures_diff_tol_rate']):
+                n = self.targetBalance[sym]
+                amt = float(self.balance[sym])
                 qty = n - amt
-                price = float(self.orderBook[sym]['bid'][0][0]) if qty > 0 else float(self.orderBook[sym]['ask'][0][0])
+                price = float(self.orderBookFt[sym]['bid'][0][0]) if qty > 0 else float(
+                    self.orderBookFt[sym]['ask'][0][0])
                 # tasks.append(asyncio.create_task(self.order(sym, price, qty)))
                 orders.append((sym, price, qty))
 
@@ -137,10 +151,13 @@ class BnTrading(SingleTonAsyncInit):
 
     async def run(self):
         while True:
-            while (self.bnWebSocket.isOrderBookUpdated() is False) or (self.bnBalance.isUpdated() is False):
+            while (self.bnFtWebSocket.isOrderBookUpdated() is False) or (
+                    self.bnBalance.isUpdated() is False) or (
+                    self.bnSpWebSocket.isOrderBookUpdated() is False):
                 await asyncio.sleep(0.1)
-            self.bnWebSocket.resetFlagOrderBookUpdate()
+            self.bnFtWebSocket.resetFlagOrderBookUpdate()
             self.bnBalance.resetFlagUpdate()
+            self.bnSpWebSocket.resetFlagOrderBookUpdate()
 
             self.calcTargetBalance()
             orders = self.generateOrderList()
@@ -148,7 +165,6 @@ class BnTrading(SingleTonAsyncInit):
                 await self.submitOrders(orders)
                 await asyncio.sleep(3)
                 await self.cancelOrders(orders)
-
 
 
 class Order:

@@ -6,7 +6,8 @@ from view.MyTelegram import MyTelegram
 from view.MyLogger import MyLogger
 from bn_data.BnExInfo import BnExInfo
 from bn_data.BnBalance import BnBalance
-from bn_data.BnWebSocket import BnWebSocket
+from bn_data.BnFtWebSocket import BnFtWebSocket
+from bn_data.BnSpWebSocket import BnSpWebSocket
 from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger, getConfigScheduler
 from common.createTask import createTask
 from common.MyScheduler import MyScheduler
@@ -42,19 +43,21 @@ async def main():
 
     # layer2
     bnBalance = await BnBalance.createIns(client, symbols)
-    bnWebSocket = await BnWebSocket.createIns(client, symbols)
+    bnFtWebSocket = await BnFtWebSocket.createIns(client, symbols)
+    bnSpWebSocket = await BnSpWebSocket.createIns(client, symbols)
     bnExInfo = await BnExInfo.createIns(client, symbols)
 
     # layer3
     bnTrading = await BnTrading.createIns(client, configPools=configPools, configTrading=configTrading,
-                                          bnExInfo=bnExInfo, bnBalance=bnBalance, bnWebSocket=bnWebSocket)
+                                          bnExInfo=bnExInfo, bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket)
 
     # layer4
-    myConsole = MyConsole(bnBalance=bnBalance, bnWebSocket=bnWebSocket, symbols=symbols)
-    myGui = await MyGui.createIns(bnBalance=bnBalance, bnWebSocket=bnWebSocket, bnTrading=bnTrading, symbols=symbols)
+    myConsole = MyConsole(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, symbols=symbols)
+    myGui = await MyGui.createIns(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, symbols=symbols)
 
     for symbol in symbols:
-        bnWebSocket.addStream(symbol.lower() + '@depth5@100ms')  # "ftmusdt@depth5@500ms"
+        bnFtWebSocket.addStream(symbol.lower() + '@depth5@100ms')  # "ftmusdt@depth5@500ms"
+        bnSpWebSocket.addStream(symbol.lower() + '@bookTicker')  # "ftmusdt@depth5@500ms"
 
     tasks = []
     try:
@@ -63,7 +66,8 @@ async def main():
         tasks.append(createTask(myLogger.run()))
 
         tasks.append(createTask(bnBalance.run()))
-        tasks.append(createTask(bnWebSocket.run()))
+        tasks.append(createTask(bnFtWebSocket.run()))
+        tasks.append(createTask(bnSpWebSocket.run()))
         tasks.append(createTask(bnExInfo.run()))
 
         tasks.append(createTask(bnTrading.run()))

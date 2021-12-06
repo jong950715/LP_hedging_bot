@@ -24,7 +24,7 @@ class MyScheduler(SingleTonAsyncInit):
         if 'minValue' in self.newKey:
             newPeriod = self.config['config']['min_value_period'] / self.config['config']['base_period']
         if 'runningAlert' == self.newKey:
-            newPeriod = self.config['config']['running_alert'] / self.config['config']['base_period']
+            newPeriod = self.config['config']['running_alert_period'] / self.config['config']['base_period']
         self.timer[newPeriod][1].add(self.newKey)
         return [False, newPeriod]
 

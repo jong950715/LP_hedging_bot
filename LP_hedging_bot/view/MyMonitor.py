@@ -7,12 +7,13 @@ from bn_data.BnBalance import BnBalance
 from trading.BnTrading import BnTrading
 
 
-class MyGui(SingleTonAsyncInit):
+class MyMonitor(SingleTonAsyncInit):
     async def _asyncInit(self, bnBalance: BnBalance,
                          bnFtWebSocket: BnFtWebSocket,
                          bnSpWebSocket,
-                         bnTrading: BnTrading, symbols):
+                         bnTrading: BnTrading, symbols, flagGui):
         self.symbols = symbols
+        self.flagGui = flagGui
         self.orderBookFt = bnFtWebSocket.getOrderBook()
         self.orderBookSp = bnSpWebSocket.getOrderBook()
         self.balance = bnBalance.getBalance()
@@ -20,18 +21,21 @@ class MyGui(SingleTonAsyncInit):
 
         self.bnBalance = bnBalance
 
+        if self.flagGui:
+            self._initGui()
+
+    def _initGui(self): # GUI
         self.root = tkinter.Tk()
         self.root.title('AutoHedgingBot')
-
         self.treeViews = dict()
         self.treeLists = defaultdict(lambda: [[]])
         self._initTreeView()
 
-    def updateTreeView(self):
+    def updateTreeView(self): # GUI
         for name, treeView in self.treeViews.items():
             self._updateTreeView(treeView, self.treeLists[name])
 
-    def _updateTreeView(self, treeView, treeList):
+    def _updateTreeView(self, treeView, treeList): # GUI
         lenView = len(treeView.get_children())
         lenData = len(treeList)
         if lenView < lenData:
@@ -48,7 +52,8 @@ class MyGui(SingleTonAsyncInit):
 
     def _initTreeView(self):
         self.treeViews['common'] = self.newTreeViewByCols(['liquidation'])
-        self.treeViews['sym'] = self.newTreeViewByCols(['sym', 'price', 'amt', 'trigger', 'spreadF', 'spreadS', 'diffSF'])
+        self.treeViews['sym'] = self.newTreeViewByCols(
+            ['sym', 'price', 'amt', 'trigger', 'spreadF', 'spreadS', 'diffSF'])
 
     def newTreeViewByCols(self, cols):
         treeView = tkinter.ttk.Treeview(self.root, columns=cols, show='headings')
@@ -66,18 +71,23 @@ class MyGui(SingleTonAsyncInit):
             tL[i][0] = sym
             tL[i][1] = self.orderBookFt[sym]['bid'][0][0]
             tL[i][2] = self.balance[sym]
-            tL[i][3] = '{:.3f}%'.format((self.tradingData[sym]['triggerRate'])*100)
-            tL[i][4] = '{:.3f}%'.format(self.tradingData[sym]['spreadRateFt']*100)
+            tL[i][3] = '{:.3f}%'.format((self.tradingData[sym]['triggerRate']) * 100)
+            tL[i][4] = '{:.3f}%'.format(self.tradingData[sym]['spreadRateFt'] * 100)
             tL[i][5] = '{:.3f}%'.format(self.tradingData[sym]['spreadRateSp'] * 100)
             tL[i][6] = '{:.3f}%'.format(self.tradingData[sym]['sfDiffRate'] * 100)
             # tL[i][6] = self.orderBookSp[sym]['bid'][1][0] #debug
 
         self.treeLists['sym'] = tL
-        self.treeLists['common'] = [[self.bnBalance.getLiqPercent()]]
+        self.treeLists['common'] = [['{:.2f}%'.format(self.bnBalance.getLiqPercent())]]
+
+    def _runGui(self):
+        if self.flagGui:
+            self._runSymTreeView()
+            self.updateTreeView()
+            self.root.update()
 
     async def run(self):
         while True:
             await asyncio.sleep(0.5)
-            self._runSymTreeView()
-            self.updateTreeView()
-            self.root.update()
+            self._runGui()
+

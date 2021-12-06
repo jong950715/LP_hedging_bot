@@ -11,13 +11,18 @@ from bn_data.BnSpWebSocket import BnSpWebSocket
 from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger, getConfigScheduler
 from common.createTask import createTask
 from common.MyScheduler import MyScheduler
-from view.MyGui import MyGui
+from view.MyMonitor import MyMonitor
 import asyncio
 import sys
 import platform
 
 
 async def main():
+    if platform.system() == 'Windows' or platform.system() == 'Darwin':
+        flagGui = True
+    else:
+        flagGui = False
+
     # layer 0
     configPools = getConfigPools()
     configKeys = getConfigKeys()
@@ -52,8 +57,8 @@ async def main():
                                           bnExInfo=bnExInfo, bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket)
 
     # layer4
-    myConsole = MyConsole(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, symbols=symbols)
-    myGui = await MyGui.createIns(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, symbols=symbols)
+    myConsole = MyConsole(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnTrading=bnTrading, symbols=symbols)
+    myMonitor = await MyMonitor.createIns(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, symbols=symbols, flagGui=flagGui)
 
     for symbol in symbols:
         bnFtWebSocket.addStream(symbol.lower() + '@depth5@100ms')  # "ftmusdt@depth5@500ms"
@@ -72,9 +77,9 @@ async def main():
 
         tasks.append(createTask(bnTrading.run()))
 
-        if platform.system() == 'Windows' or platform.system() == 'Darwin':
+        if flagGui:
             tasks.append(createTask(myConsole.run()))
-            tasks.append(createTask(myGui.run()))
+        tasks.append(createTask(myMonitor.run()))
         await asyncio.wait(tasks)
     except Exception as e:
         print(e)

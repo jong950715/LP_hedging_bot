@@ -125,9 +125,8 @@ class BnTrading(SingleTonAsyncInit):
                 n = self.targetBalance[sym]
                 amt = float(self.balance[sym])
                 qty = n - amt
-                price = float(self.orderBookFt[sym]['bid'][0][0]) if qty > 0 else float(
-                    self.orderBookFt[sym]['ask'][0][0])
-                # tasks.append(asyncio.create_task(self.order(sym, price, qty)))
+                price = float(self.orderBookFt[sym]['bid'][0][0]) if qty > 0 else float(self.orderBookFt[sym]['ask'][0][0])
+                # self.orderInfo[self.sym]['priceStep']
                 orders.append((sym, price, qty))
 
         return orders

@@ -10,7 +10,7 @@ from trading.enums import VAL_OPTION
 from config.config import getConfigKeys
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from view.MyLogger import MyLogger
-from common.createTask import createTask
+from common.createTask import createTask, RUNNING_FLAG
 from common.MyScheduler import MyScheduler
 
 
@@ -149,7 +149,7 @@ class BnTrading(SingleTonAsyncInit):
         returns, pending = await asyncio.wait(tasks)
 
     async def run(self):
-        while True:
+        while RUNNING_FLAG[0]:
             while (self.bnFtWebSocket.isOrderBookUpdated() is False) or (
                     self.bnBalance.isUpdated() is False) or (
                     self.bnSpWebSocket.isOrderBookUpdated() is False):

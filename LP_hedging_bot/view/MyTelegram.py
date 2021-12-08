@@ -66,7 +66,8 @@ class MyTelegram(SingleTonAsyncInit):
         except KeyError as e:
             self.sendMessage('잘못된 형식 또는 인자')
         except Exception as e:
-            self.sendMessage(str(e))
+            # self.sendMessage(str(e))
+            raise e
 
     def _consumer(self, text):
         func = self.findFunction.findall(text)[0]
@@ -86,7 +87,7 @@ class MyTelegram(SingleTonAsyncInit):
 
     async def run(self):
         await self.checkLatest()
-        while True:
+        while RUNNING_FLAG[0]:
             await self.flush()
             await self.recvRoutine()
             await asyncio.sleep(1)

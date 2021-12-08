@@ -5,6 +5,7 @@ from collections import defaultdict
 from bn_data.BnFtWebSocket import BnFtWebSocket
 from bn_data.BnBalance import BnBalance
 from trading.BnTrading import BnTrading
+from common.createTask import RUNNING_FLAG
 
 
 class MyMonitor(SingleTonAsyncInit):
@@ -87,7 +88,7 @@ class MyMonitor(SingleTonAsyncInit):
             self.root.update()
 
     async def run(self):
-        while True:
+        while RUNNING_FLAG[0]:
             await asyncio.sleep(0.5)
             self._runGui()
 

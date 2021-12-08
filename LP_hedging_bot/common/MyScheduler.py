@@ -2,6 +2,7 @@ from common.SingleTonAsyncInit import SingleTonAsyncInit
 import asyncio
 from collections import defaultdict
 from config.config import getConfigScheduler
+from common.createTask import RUNNING_FLAG
 # from common.createTask import createTask
 # import schedule  # 기능은 파워풀하지만, 너무 무거움. 매 task 마다 시간 계속비교하고.. AWS free tier 를 위해 자작으로 최적화 ㄱㄱ
 
@@ -71,7 +72,7 @@ class MyScheduler(SingleTonAsyncInit):
         pass
 
     async def run(self):
-        while True:
+        while RUNNING_FLAG[0]:
             await asyncio.sleep(self.config['config']['base_period'])
             self.scheduler()
 

@@ -46,6 +46,11 @@ class SingleTonAsyncInit:
         await asyncio.sleep(0)
         raise NotImplementedError('_asyncInit must be implemented. Do not use __init__') #
 
+    @classmethod
+    def selfDestruct(cls):
+        cls._ins = None
+        cls.chkGetIns = False
+
 
 class MyClass(SingleTonAsyncInit):
     def __init__(self):

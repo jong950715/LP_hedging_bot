@@ -2,6 +2,8 @@ from collections import defaultdict
 import asyncio
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from binance import AsyncClient
+from common.createTask import RUNNING_FLAG
+from common.MyScheduler import MyScheduler
 
 
 class BnExInfo(SingleTonAsyncInit):
@@ -38,6 +40,7 @@ class BnExInfo(SingleTonAsyncInit):
                     self.orderInfo[sym]['minValue'] = fil['notional']
 
     async def run(self):
-        while True:
-            await self.updateOrderFilters()
-            await asyncio.sleep(3600)
+        while RUNNING_FLAG[0]:
+            if MyScheduler.getInsSync().checkFlags('exInfo') is False:
+                await self.updateOrderFilters()
+            await asyncio.sleep(10)

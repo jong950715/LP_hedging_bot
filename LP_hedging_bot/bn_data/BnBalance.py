@@ -6,6 +6,7 @@ from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from config.config import getConfigKeys
 from common.safeDivide import safeDivide
+from common.createTask import createTask, RUNNING_FLAG
 import time
 
 
@@ -41,8 +42,8 @@ class BnBalance(SingleTonAsyncInit):
             return False
 
     async def updateBalance(self):
-        tasks = [asyncio.create_task(self.cli.futures_position_information(symbol=symbol)) for symbol in
-                 self.symbols]
+        # tasks = [asyncio.create_task(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
+        tasks = [createTask(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
         returns, pending = await asyncio.wait(tasks)
         netSum = 0.0
         notionalSum = 0.0
@@ -70,7 +71,7 @@ class BnBalance(SingleTonAsyncInit):
 
 
     async def run(self):
-        while True:
+        while RUNNING_FLAG[0]:
             await self.updateBalance()
             self.setFlagUpdate()
             await asyncio.sleep(0.08)
@@ -79,6 +80,10 @@ class BnBalance(SingleTonAsyncInit):
 async def main():
     configKeys = getConfigKeys()
     client = await AsyncClient.create(configKeys['binance']['api_key'], configKeys['binance']['secret_key'])
+
+    res0 = await client.get_exchange_info()
+    print(res0)
+    return
     res1 = await client.futures_position_information()
     print(res1)
     res2 = await client.futures_position_information(symbol='trxusdt')
@@ -91,6 +96,7 @@ async def main():
     print(res5)
 
     await client.close_connection()
+    # get_exchange_info
 
 
 if __name__ == "__main__":

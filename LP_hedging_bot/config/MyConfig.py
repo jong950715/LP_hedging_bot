@@ -41,6 +41,9 @@ class MyConfig(SingleTonAsyncInit):
         if func.lower() == 'setConfig'.lower():
             return self.setConfig(params)
 
+        if func.lower() == 'shutDown'.lower():
+            raise Exception('shutDown command has been entered.')
+
     def setConfig(self, params):
         if len(params) != 4:
             return '인자가 4개 이어야 합니다.'

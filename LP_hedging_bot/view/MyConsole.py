@@ -8,6 +8,7 @@ from trading.BnTrading import BnTrading
 from view.MyLogger import MyLogger
 from common.MyScheduler import MyScheduler
 import platform
+from common.createTask import RUNNING_FLAG
 
 
 class MyConsole():
@@ -47,7 +48,7 @@ class MyConsole():
         return 'LiqPercent: {0:.2f}%\n{1:}'.format(self.bnBalance.getLiqPercent(), tb)
 
     async def run(self):
-        while True:
+        while RUNNING_FLAG[0]:
             await asyncio.sleep(2)
 
             tb = self._getTable()

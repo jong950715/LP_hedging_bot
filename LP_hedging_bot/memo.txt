@@ -12,9 +12,18 @@
 
 - 오더 가격 조정
 
+* API rate Limit 체크
+
+* 업데이트 이벤트 asyncio.Event()로 바꿔주기
+
+- Logger, Tele, createTask에 얽힌 순환참조
+
+- 자동 재실행 관련해서 직접 메모리 다 리셋하려니까 너무 복잡하고 실수가 무적권 튀어나올것만 같음..
+- 소켓, Tkinter, log handler등 직접 리셋해줘야 할게 다양해서 실수가 무적권 생길듯.
 
 ##주의사항##
 cross담보
 
 ##전제##
 1. USDC, USDT, DAI는 동일 가치를 지닌다.
+

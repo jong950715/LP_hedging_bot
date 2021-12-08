@@ -5,6 +5,7 @@ import json
 from collections import defaultdict
 from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
+from common.createTask import RUNNING_FLAG
 
 
 class BnFtWebSocket(SingleTonAsyncInit):
@@ -56,7 +57,7 @@ class BnFtWebSocket(SingleTonAsyncInit):
         self.bsm = BinanceSocketManager(self.cli)
         async with self.bsm._get_futures_socket(path=self.stream, futures_type=FuturesType.USD_M) as ts:
             print(self.stream + " is opened")
-            while True:
+            while RUNNING_FLAG[0]:
                 msg = await ts.recv()
                 etype, symbol = msg['data']['e'], msg['data']['s']
 

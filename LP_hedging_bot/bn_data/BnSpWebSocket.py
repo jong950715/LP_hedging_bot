@@ -6,7 +6,7 @@ from collections import defaultdict
 from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from config.config import getConfigKeys
-
+from common.createTask import RUNNING_FLAG
 
 class BnSpWebSocket(SingleTonAsyncInit):
     async def _asyncInit(self, client: AsyncClient, symbols):
@@ -57,7 +57,7 @@ class BnSpWebSocket(SingleTonAsyncInit):
         self.bsm = BinanceSocketManager(self.cli)
         async with self.bsm._get_socket(path=self.stream) as ts:
             print(self.stream + " is opened")
-            while True:
+            while RUNNING_FLAG[0]:
                 msg = await ts.recv()
                 self.consumerOrderBook(msg)
 

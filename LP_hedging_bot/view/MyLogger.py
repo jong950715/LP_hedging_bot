@@ -3,15 +3,16 @@ import logging
 
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from definitions import getRootDir
-from view.MyTelegram import MyTelegram
-from collections import defaultdict
+from view.MyTelegram import *
+from common.createTask import *
+import time
 
 """
 콘솔로그
 파일로그
 텔레그램로그
 """
-LOGGER_NAME = 'myLogger'
+LOGGER_NAME = 'myLogger{}'
 LOGGER_LEVEL = logging.DEBUG
 LOG_FILE_NAME = '/view/AutoHedgeBot'
 EAGER_THREASHOLD = 35
@@ -57,7 +58,7 @@ class TeleGramHandler(logging.Handler):
 class MyLogger(SingleTonAsyncInit):
     async def _asyncInit(self, myTelegram: MyTelegram, configLogger):
         self.config = configLogger
-        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger = logging.getLogger(LOGGER_NAME.format(time.time()))
         self.logger.setLevel(LOGGER_LEVEL)
         formatter = logging.Formatter(
             '\n|%(asctime)s|'
@@ -80,7 +81,7 @@ class MyLogger(SingleTonAsyncInit):
 
     async def run(self):
         # flush every 10seconds
-        while True:
+        while RUNNING_FLAG[0]:
             await asyncio.sleep(self.config['config']['flush_period'])
             self.fileHandler.myFlush()
 

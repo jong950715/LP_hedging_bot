@@ -34,11 +34,22 @@ class BnSpWebSocket(SingleTonAsyncInit):
     def setSymbols(self, s):
         self.symbols = s
 
-    def addStream(self, s: str):
+    def addStream(self, sym: str, ev: str):
+        stream = ev.format(sym.lower())
         if len(self.stream) == 0:
-            self.stream = s
+            self.stream = stream
         else:
-            self.stream = self.stream + '/' + s
+            self.stream = self.stream + '/' + stream
+        self.orderBookSp[sym.upper()]['event'] = asyncio.Event()
+
+    async def awaitOrerBookUpdate(self):
+        for sym, book in self.orderBookSp.items():
+            if sym not in self.fiats:
+                await book['event'].wait()
+
+    def clearAwaitEvent(self):
+        for sym, book in self.orderBookSp.items():
+            book['event'].clear()
 
     def isOrderBookUpdated(self):
         for sym in self.symbols:
@@ -68,8 +79,8 @@ class BnSpWebSocket(SingleTonAsyncInit):
 
         self.orderBookSp[symbol]['bid'][0] = [msg['b'], msg['B']]
         self.orderBookSp[symbol]['ask'][0] = [msg['a'], msg['A']]
-        # self.orderBookSp[symbol]['bid'][1][0] += 1 # debug
-        self.orderBookSp[symbol]['update'] = True
+
+        self.orderBookSp[symbol]['event'].set()
 
         #print(symbol, self.orderBookSp[symbol]['bid'][0])  # debug
 

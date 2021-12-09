@@ -150,13 +150,13 @@ class BnTrading(SingleTonAsyncInit):
 
     async def run(self):
         while RUNNING_FLAG[0]:
-            while (self.bnFtWebSocket.isOrderBookUpdated() is False) or (
-                    self.bnBalance.isUpdated() is False) or (
-                    self.bnSpWebSocket.isOrderBookUpdated() is False):
-                await asyncio.sleep(0.1)
-            self.bnFtWebSocket.resetFlagOrderBookUpdate()
-            self.bnBalance.resetFlagUpdate()
-            self.bnSpWebSocket.resetFlagOrderBookUpdate()
+            await self.bnFtWebSocket.awaitOrerBookUpdate()
+            await self.bnSpWebSocket.awaitOrerBookUpdate()
+            await self.bnBalance.awaitUpdateEvent()
+
+            self.bnFtWebSocket.clearAwaitEvent()
+            self.bnFtWebSocket.clearAwaitEvent()
+            self.bnBalance.clearUpdateEvent()
 
             self.calcTargetBalance()
             orders = self.generateOrderList()

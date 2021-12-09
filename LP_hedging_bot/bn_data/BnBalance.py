@@ -1,7 +1,14 @@
 import asyncio
+
+from aiohttp import ClientOSError
 from binance import AsyncClient
 import json
 from collections import defaultdict
+import traceback
+
+from view.MyLogger import MyLogger
+from binance.exceptions import BinanceRequestException
+
 from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from config.config import getConfigKeys
@@ -16,7 +23,7 @@ class BnBalance(SingleTonAsyncInit):
         self.symbols = []
         self.balance = defaultdict(lambda: 0)  # self.balance['symbol'] = amt (ex -10)
         self.prev = 0
-        self.flagUpdated = False
+        self.updateEvent = asyncio.Event()
         self.symbols = symbols
         self.liqPercent = 0
 
@@ -29,19 +36,16 @@ class BnBalance(SingleTonAsyncInit):
     def getBalance(self):
         return self.balance
 
-    def setFlagUpdate(self):
-        self.flagUpdated = True
+    def setUpdateEvent(self):
+        self.updateEvent.set()
 
-    def resetFlagUpdate(self):
-        self.flagUpdated = False
+    def clearUpdateEvent(self):
+        self.updateEvent.clear()
 
-    def isUpdated(self):
-        if self.flagUpdated is True:
-            return True
-        else:
-            return False
+    async def awaitUpdateEvent(self):
+        await self.updateEvent.wait()
 
-    async def updateBalance(self):
+    async def _updateBalance(self):
         # tasks = [asyncio.create_task(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
         tasks = [createTask(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
         returns, pending = await asyncio.wait(tasks)
@@ -66,14 +70,27 @@ class BnBalance(SingleTonAsyncInit):
 
         self.liqPercent = safeDivide(safeDivide(netSum, notionalSum), len(returns)) * 100
 
+    async def updateBalance(self):
+        try:
+            await self._updateBalance()
+        except BinanceRequestException as e:
+            await self.updateBalance()
+            emsg = traceback.format_exc()
+            MyLogger.getInsSync().getLogger().warning(emsg)
+        except ClientOSError as e:
+            await self.updateBalance()
+            emsg = traceback.format_exc()
+            MyLogger.getInsSync().getLogger().warning(emsg)
+        except Exception as e:
+            raise e
+
     def getLiqPercent(self):
         return self.liqPercent
-
 
     async def run(self):
         while RUNNING_FLAG[0]:
             await self.updateBalance()
-            self.setFlagUpdate()
+            self.setUpdateEvent()
             await asyncio.sleep(0.08)
 
 

@@ -67,8 +67,8 @@ async def _main():
                                               flagGui=flagGui)
 
     for symbol in symbols:
-        bnFtWebSocket.addStream(symbol.lower() + '@depth5@100ms')  # "ftmusdt@depth5@500ms"
-        bnSpWebSocket.addStream(symbol.lower() + '@bookTicker')  # "ftmusdt@depth5@500ms"
+        bnFtWebSocket.addStream(symbol, '{}@depth5@100ms')  # "ftmusdt@depth5@500ms"
+        bnSpWebSocket.addStream(symbol, '{}@bookTicker')  # "ftmusdt@depth5@500ms"
 
     myLogger.getLogger().error("start")
 
@@ -148,8 +148,8 @@ async def main():
     RUNNING_FLAG[0] = True
     await _main()
     print("reset?")
-        # resetSingleTon()
-        # gc.collect(generation=2)
+    # resetSingleTon()
+    # gc.collect(generation=2)
     # os.execv(sys.argv[0], sys.argv)
     # os.execl(sys.executable, sys.executable, *sys.argv)
     # gc.get_referents()

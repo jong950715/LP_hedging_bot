@@ -51,7 +51,6 @@ class MyConsole():
         while RUNNING_FLAG[0]:
             await asyncio.sleep(2)
 
-            tb = self._getTable()
-
             if MyScheduler.getInsSync().checkFlags('runningAlert') is False:
+                tb = self._getTable()
                 MyLogger.getInsSync().getLogger().info(tb)

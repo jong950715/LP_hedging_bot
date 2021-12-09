@@ -25,6 +25,7 @@ class BnFtWebSocket(SingleTonAsyncInit):
             self.orderBookFt[sym]['bid'] = [[1, 100000] * MaxOderBookDepth]
             self.orderBookFt[sym]['ask'] = [[1, 100000] * MaxOderBookDepth]
             self.orderBookFt[sym]['update'] = True
+
     def getOrderBook(self):
         return self.orderBookFt
 
@@ -34,24 +35,22 @@ class BnFtWebSocket(SingleTonAsyncInit):
     def setSymbols(self, s):
         self.symbols = s
 
-    def addStream(self, s: str):
+    def addStream(self, sym: str, ev: str):
+        stream = ev.format(sym.lower())
         if len(self.stream) == 0:
-            self.stream = s
+            self.stream = stream
         else:
-            self.stream = self.stream + '/' + s
+            self.stream = self.stream + '/' + stream
+        self.orderBookFt[sym.upper()]['event'] = asyncio.Event()
 
-    def isOrderBookUpdated(self):
-        for sym in self.symbols:
-            if self.orderBookFt[sym]['update'] is not True:
-                return False
-        else:
-            return True
-
-    def resetFlagOrderBookUpdate(self):
+    async def awaitOrerBookUpdate(self):
         for sym, book in self.orderBookFt.items():
-            book['update'] = False
-        for sym in self.fiats:
-            self.orderBookFt[sym]['update'] = True
+            if sym not in self.fiats:
+                await book['event'].wait()
+
+    def clearAwaitEvent(self):
+        for sym, book in self.orderBookFt.items():
+            book['event'].clear()
 
     async def run(self):
         self.bsm = BinanceSocketManager(self.cli)
@@ -76,9 +75,9 @@ class BnFtWebSocket(SingleTonAsyncInit):
         for i, a in enumerate(msg['data']['a']):  # sell 팝니다
             self.orderBookFt[symbol]['ask'][i] = a
 
-        self.orderBookFt[symbol]['update'] = True
+        self.orderBookFt[symbol]['event'].set()
 
-        #print(ticker, self.orderBook[ticker]['bid'][0]) # debug
+        # print(ticker, self.orderBook[ticker]['bid'][0]) # debug
 
 
 async def main():

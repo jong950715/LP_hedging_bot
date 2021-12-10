@@ -73,14 +73,10 @@ class BnBalance(SingleTonAsyncInit):
     async def updateBalance(self):
         try:
             await self._updateBalance()
-        except BinanceRequestException as e:
-            await self.updateBalance()
+        except (BinanceRequestException, ClientOSError, asyncio.exceptions.TimeoutError) as e:
             emsg = traceback.format_exc()
             MyLogger.getInsSync().getLogger().warning(emsg)
-        except ClientOSError as e:
             await self.updateBalance()
-            emsg = traceback.format_exc()
-            MyLogger.getInsSync().getLogger().warning(emsg)
         except Exception as e:
             raise e
 

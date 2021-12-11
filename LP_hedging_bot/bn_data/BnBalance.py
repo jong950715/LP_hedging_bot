@@ -70,6 +70,7 @@ class BnBalance(SingleTonAsyncInit):
             notionalSum += notional
 
         self.liqPercent = safeDivide(safeDivide(netSum, notionalSum), len(returns)) * 100
+        self.setUpdateEvent()
 
     async def updateBalance(self):
         try:
@@ -87,8 +88,7 @@ class BnBalance(SingleTonAsyncInit):
     async def run(self):
         while RUNNING_FLAG[0]:
             await self.updateBalance()
-            self.setUpdateEvent()
-            await asyncio.sleep(0.08)
+            await asyncio.sleep(10)
 
 
 async def main():

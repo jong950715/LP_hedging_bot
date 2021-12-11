@@ -1,6 +1,7 @@
 import asyncio
 
-from aiohttp import ClientOSError
+#from aiohttp import ClientOSError
+import aiohttp
 from binance import AsyncClient
 import json
 from collections import defaultdict
@@ -73,7 +74,7 @@ class BnBalance(SingleTonAsyncInit):
     async def updateBalance(self):
         try:
             await self._updateBalance()
-        except (BinanceRequestException, ClientOSError, asyncio.exceptions.TimeoutError) as e:
+        except (BinanceRequestException, aiohttp.ClientOSError, asyncio.exceptions.TimeoutError) as e:
             emsg = traceback.format_exc()
             MyLogger.getInsSync().getLogger().warning(emsg)
             await self.updateBalance()

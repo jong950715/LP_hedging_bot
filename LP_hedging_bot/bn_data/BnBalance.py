@@ -53,6 +53,10 @@ class BnBalance(SingleTonAsyncInit):
         netSum = 0.0
         notionalSum = 0.0
         for ret in returns:
+            try:
+                await ret
+            except Exception as e:
+                raise e
             msg = ret.result()[0]
 
             sym = msg['symbol']

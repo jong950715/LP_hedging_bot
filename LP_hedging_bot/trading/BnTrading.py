@@ -98,7 +98,7 @@ class BnTrading(SingleTonAsyncInit):
         무조건 양수의 비가 반환되는 함수입니다.
         '''
         if n1 == n2:
-            return 1.0
+            return 0.0
         if n1 == 0.0 or n2 == 0.0:
             return 999999999.9
 

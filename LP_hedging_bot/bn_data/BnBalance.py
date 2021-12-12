@@ -8,7 +8,7 @@ from collections import defaultdict
 import traceback
 
 from view.MyLogger import MyLogger
-from binance.exceptions import BinanceRequestException
+from binance.exceptions import BinanceRequestException, BinanceAPIException
 
 from bn_data.BnCommons import *
 from common.SingleTonAsyncInit import SingleTonAsyncInit
@@ -79,7 +79,7 @@ class BnBalance(SingleTonAsyncInit):
     async def updateBalance(self):
         try:
             await self._updateBalance()
-        except (BinanceRequestException, aiohttp.ClientOSError, asyncio.exceptions.TimeoutError) as e:
+        except (BinanceRequestException, BinanceAPIException, aiohttp.ClientOSError, asyncio.exceptions.TimeoutError) as e:
             emsg = traceback.format_exc()
             MyLogger.getInsSync().getLogger().warning(emsg)
             await self.updateBalance()

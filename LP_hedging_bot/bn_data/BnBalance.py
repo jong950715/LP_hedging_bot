@@ -48,7 +48,7 @@ class BnBalance(SingleTonAsyncInit):
 
     async def _updateBalance(self):
         # tasks = [asyncio.create_task(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
-        tasks = [createTask(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
+        tasks = [asyncio.create_task(self.cli.futures_position_information(symbol=symbol)) for symbol in self.symbols]
         returns, pending = await asyncio.wait(tasks)
         netSum = 0.0
         notionalSum = 0.0

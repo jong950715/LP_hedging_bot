@@ -1,6 +1,6 @@
 import asyncio
 
-#from aiohttp import ClientOSError
+# from aiohttp import ClientOSError
 import aiohttp
 from binance import AsyncClient
 import json
@@ -73,13 +73,15 @@ class BnBalance(SingleTonAsyncInit):
                 netSum += 0
             notionalSum += notional
 
-        self.liqPercent = safeDivide(safeDivide(netSum, notionalSum), len(returns)) * 100
+        self.liqPercent = safeDivide(safeDivide(netSum, notionalSum), len(returns))
+        self.liqPercent = (1 + self.liqPercent / 2) * (1 + self.liqPercent / 2) * 98 - 100  # 2% discount
         self.setUpdateEvent()
 
     async def updateBalance(self):
         try:
             await self._updateBalance()
-        except (BinanceRequestException, BinanceAPIException, aiohttp.ClientOSError, asyncio.exceptions.TimeoutError) as e:
+        except (
+        BinanceRequestException, BinanceAPIException, aiohttp.ClientOSError, asyncio.exceptions.TimeoutError) as e:
             emsg = traceback.format_exc()
             MyLogger.getInsSync().getLogger().warning(emsg)
             await self.updateBalance()

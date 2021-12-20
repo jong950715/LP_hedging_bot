@@ -124,7 +124,7 @@ class BnTrading(SingleTonAsyncInit):
                     sfDiffRate < self.configTrading['config']['spot_futures_diff_tol_rate']):
                 n = self.targetBalance[sym]
                 amt = float(self.balance[sym])
-                qty = n - amt
+                qty = (n - amt) * self.configTrading['config']['order_qty_rate']
                 price = float(self.orderBookFt[sym]['bid'][0][0]) if qty > 0 else float(self.orderBookFt[sym]['ask'][0][0])
                 # self.orderInfo[self.sym]['priceStep']
                 orders.append((sym, price, qty))

@@ -1,14 +1,13 @@
 from trading.BnTrading import BnTrading
 from binance import AsyncClient
 from bn_data.BnCommons import *
-from view.MyConsole import MyConsole
+from view.MyViewer import MyViewer
 from view.MyTelegram import MyTelegram
 from view.MyLogger import MyLogger
 from bn_data.BnExInfo import BnExInfo
 from bn_data.BnBalance import BnBalance
 from bn_data.BnFtWebSocket import BnFtWebSocket
 from bn_data.BnSpWebSocket import BnSpWebSocket
-from config.config import getConfigKeys, getConfigPools, getConfigTrading, getConfigLogger, getConfigScheduler
 from common.createTask import createTask, RUNNING_FLAG
 from common.MyScheduler import MyScheduler
 from config.MyConfig import MyConfig
@@ -26,51 +25,43 @@ async def _main():
         flagGui = False
 
     # layer 0
-    myConfig = await MyConfig.createIns()
+    pSymbols = [None, False, False]  # pSymbols = [symbols, Fupdated, Supdated]
+    myConfig = await MyConfig.createIns(pSymbols)
     configPools = myConfig.getConfig('configPools')
     configKeys = myConfig.getConfig('configKeys')
-    configTrading = myConfig.getConfig('configTrading')
-    configLogger = myConfig.getConfig('configLogger')
-    configScheduler = myConfig.getConfig('configScheduler')
-    symbols = getSymbolsFromPools(configPools)
+    pSymbols[0] = getSymbolsFromPools(configPools)
 
     # 객체 생성, 의존성 주입
 
     # layer0.5
-    myScheduler = await MyScheduler.createIns(configScheduler)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
+    myScheduler = await MyScheduler.createIns(myConfig)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
 
     # layer1
     client = await AsyncClient.create(configKeys['binance']['api_key'], configKeys['binance']['secret_key'])
-    myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id']
-                                            , myConfig)
+    myTelegram = await MyTelegram.createIns(configKeys['telegram']['api_key'], configKeys['telegram']['chat_id'], myConfig)
 
     # layer1.5
-    myLogger = await MyLogger.createIns(myTelegram, configLogger)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
+    myLogger = await MyLogger.createIns(myTelegram, myConfig)  # 직접 주입하지는 않고 알아서 가져다 쓰는걸로
 
     # layer2
-    bnBalance = await BnBalance.createIns(client, symbols)
-    bnFtWebSocket = await BnFtWebSocket.createIns(client, symbols)
-    bnSpWebSocket = await BnSpWebSocket.createIns(client, symbols)
-    bnExInfo = await BnExInfo.createIns(client, symbols)
+    bnBalance = await BnBalance.createIns(client, pSymbols)
+    bnFtWebSocket = await BnFtWebSocket.createIns(client, pSymbols)
+    bnSpWebSocket = await BnSpWebSocket.createIns(client, pSymbols)
+    bnExInfo = await BnExInfo.createIns(client, pSymbols)
 
     # layer3
-    bnTrading = await BnTrading.createIns(client, configPools=configPools, configTrading=configTrading,
-                                          bnExInfo=bnExInfo, bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket,
-                                          bnSpWebSocket=bnSpWebSocket)
+    bnTrading = await BnTrading.createIns(client, pSymbols=pSymbols, myConfig=myConfig, bnExInfo=bnExInfo, bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnSpWebSocket=bnSpWebSocket)
 
     # layer4
-    myConsole = MyConsole(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnTrading=bnTrading, symbols=symbols)
+    myViewer = MyViewer(myConfig=myConfig, bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket, bnTrading=bnTrading, pSymbols=pSymbols)
     if flagGui:
         from view.MyMonitor import MyMonitor
         myMonitor = await MyMonitor.createIns(bnBalance=bnBalance, bnFtWebSocket=bnFtWebSocket,
-                                              bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, symbols=symbols,
+                                              bnSpWebSocket=bnSpWebSocket, bnTrading=bnTrading, pSymbols=pSymbols,
                                               flagGui=flagGui)
 
-    for symbol in symbols:
-        bnFtWebSocket.addStream(symbol, '{}@depth5@100ms')  # "ftmusdt@depth5@500ms"
-        bnSpWebSocket.addStream(symbol, '{}@bookTicker')  # "ftmusdt@depth5@500ms"
 
-    myLogger.getLogger().error("start")
+    myLogger.getLogger().info("start")
 
     tasks = []
     try:
@@ -85,7 +76,7 @@ async def _main():
 
         tasks.append(createTask(bnTrading.run()))
 
-        tasks.append(createTask(myConsole.run()))
+        tasks.append(createTask(myViewer.run()))
         if flagGui:
             tasks.append(createTask(myMonitor.run()))
         await asyncio.wait(tasks)
@@ -94,54 +85,6 @@ async def _main():
         raise e
     finally:
         client.close_connection()
-
-
-def delete_ins(ins):
-    referrers = gc.get_referrers(ins)
-    for referrer in referrers:
-        if type(referrer) == dict:
-            for key, value in referrer.items():
-                if value is ins:
-                    referrer[key] = None
-
-
-def resetSingleTon():
-    if platform.system() == 'Windows' or platform.system() == 'Darwin':
-        flagGui = True
-    else:
-        flagGui = False
-    delete_ins(MyConfig.getInsSync())
-    delete_ins(MyScheduler.getInsSync())
-    delete_ins(MyTelegram.getInsSync())
-    delete_ins(MyLogger.getInsSync())
-    delete_ins(BnBalance.getInsSync())
-    delete_ins(BnFtWebSocket.getInsSync())
-    delete_ins(BnSpWebSocket.getInsSync())
-    delete_ins(BnExInfo.getInsSync())
-    delete_ins(BnTrading.getInsSync())
-    if flagGui:
-        from view.MyMonitor import MyMonitor
-        delete_ins(MyMonitor.getInsSync())
-
-    MyConfig.selfDestruct()
-    #
-    # _ins = None
-    # chkGetIns = False
-    MyScheduler.selfDestruct()
-    MyTelegram.selfDestruct()
-    MyLogger.selfDestruct()
-
-    # layer2
-    BnBalance.selfDestruct()
-    BnFtWebSocket.selfDestruct()
-    BnSpWebSocket.selfDestruct()
-    BnExInfo.selfDestruct()
-
-    # layer3
-    BnTrading.selfDestruct()
-    if flagGui:
-        from view.MyMonitor import MyMonitor
-        MyMonitor.selfDestruct()
 
 
 async def main():

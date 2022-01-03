@@ -12,8 +12,8 @@ class MyMonitor(SingleTonAsyncInit):
     async def _asyncInit(self, bnBalance: BnBalance,
                          bnFtWebSocket: BnFtWebSocket,
                          bnSpWebSocket,
-                         bnTrading: BnTrading, symbols, flagGui):
-        self.symbols = symbols
+                         bnTrading: BnTrading, pSymbols, flagGui):
+        self.pSymbols = pSymbols
         self.flagGui = flagGui
         self.orderBookFt = bnFtWebSocket.getOrderBook()
         self.orderBookSp = bnSpWebSocket.getOrderBook()
@@ -67,8 +67,8 @@ class MyMonitor(SingleTonAsyncInit):
         return treeView
 
     def _runSymTreeView(self):
-        tL = [[0 for _ in range(7)] for _ in range(len(self.symbols))]
-        for i, sym in enumerate(self.symbols):
+        tL = [[0 for _ in range(7)] for _ in range(len(self.pSymbols[0]))]
+        for i, sym in enumerate(self.pSymbols[0]):
             tL[i][0] = sym
             tL[i][1] = self.orderBookFt[sym]['bid'][0][0]
             tL[i][2] = self.balance[sym]
@@ -91,4 +91,6 @@ class MyMonitor(SingleTonAsyncInit):
         while RUNNING_FLAG[0]:
             await asyncio.sleep(0.5)
             self._runGui()
+        self.root.quit()
+        self.root.destroy()
 

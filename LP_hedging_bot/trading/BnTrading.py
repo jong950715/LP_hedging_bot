@@ -15,10 +15,12 @@ from common.MyScheduler import MyScheduler
 
 
 class BnTrading(SingleTonAsyncInit):
-    async def _asyncInit(self, client: AsyncClient, configPools, configTrading, bnExInfo: BnExInfo,
+    async def _asyncInit(self, client: AsyncClient, pSymbols, myConfig, bnExInfo: BnExInfo,
                          bnBalance: BnBalance, bnFtWebSocket: BnFtWebSocket, bnSpWebSocket: BnSpWebSocket):
-        self.configPools = configPools
-        self.configTrading = configTrading
+        self.pSymbols = pSymbols
+
+        self.configPools = myConfig.getConfig('configPools')
+        self.configTrading = myConfig.getConfig('configCommon')['trading']
         self.orderBookFt = bnFtWebSocket.getOrderBook()
         self.orderBookSp = bnSpWebSocket.getOrderBook()
         self.balance = bnBalance.getBalance()
@@ -26,12 +28,14 @@ class BnTrading(SingleTonAsyncInit):
 
         self.cli = client
 
+        self.myConfig = myConfig
         self.bnExInfo = bnExInfo
         self.bnBalance = bnBalance
         self.bnFtWebSocket = bnFtWebSocket
         self.bnSpWebSocket = bnSpWebSocket
 
         self.targetBalance = defaultdict(lambda: 0)
+        self.poolSize = defaultdict(lambda: 0)
 
         self.fiats = FIATS
 
@@ -55,6 +59,7 @@ class BnTrading(SingleTonAsyncInit):
     def calcTargetBalance(self):
         for sym in self.targetBalance.keys():
             self.targetBalance[sym] = 0
+            self.poolSize[sym] = 0
 
         for k, configPool in self.configPools.items():
             sym1 = configPool['sym1']
@@ -74,8 +79,10 @@ class BnTrading(SingleTonAsyncInit):
 
             if sym1 not in self.fiats:
                 self.targetBalance[sym1] += (targetAmt1 - n1)
+                self.poolSize[sym1] += n1
             if sym2 not in self.fiats:
                 self.targetBalance[sym2] += (targetAmt2 - n2)
+                self.poolSize[sym2] += n2
 
     def getRates(self, sym):
         bidF = float(self.orderBookFt[sym]['bid'][0][0])  # 삽니다.
@@ -90,43 +97,42 @@ class BnTrading(SingleTonAsyncInit):
 
         n = self.targetBalance[sym]
         amt = float(self.balance[sym])
+        N = self.poolSize[sym]
+        triggerRate = (n - amt) / N if N != 0 else 0
 
-        return spreadF / centerPriceF, spreadS / centerPriceS, self.getDiffRate(centerPriceF, centerPriceS), self.getDiffRate(n, amt)
+        return triggerRate, spreadF / centerPriceF, spreadS / centerPriceS, (centerPriceF / centerPriceS - 1)
 
-    def getDiffRate(self, n1, n2):
-        '''
-        무조건 양수의 비가 반환되는 함수입니다.
-        '''
-        if n1 == n2:
-            return 0.0
-        if n1 == 0.0 or n2 == 0.0:
-            return 999999999.9
-
-        n1 = abs(n1)
-        n2 = abs(n2)
-        return (n2 / n1 - 1.0) if n2 > n1 else (n1 / n2 - 1.0)
+    def setExportData(self, sym, triggerRate, spreadRateFt, spreadRateSp, sfDiffRate):
+        self.exportData[sym]['triggerRate'] = triggerRate
+        self.exportData[sym]['spreadRateFt'] = spreadRateFt
+        self.exportData[sym]['spreadRateSp'] = spreadRateSp
+        self.exportData[sym]['sfDiffRate'] = sfDiffRate
 
     def generateOrderList(self):
-        # tasks = [asyncio.create_task(asyncio.sleep(0))] # empty tasks
-
         orders = []  # 결과물 담을 리스트
         for sym in self.targetBalance.keys():  # symbol 하나씩 순회 하면서 괴리율 점검
-            spreadRateFt, spreadRateSp, sfDiffRate, triggerRate = self.getRates(sym)
+            triggerRate, spreadRateFt, spreadRateSp, sfDiffRate = self.getRates(sym)
 
-            self.exportData[sym]['triggerRate'] = triggerRate
-            self.exportData[sym]['spreadRateFt'] = spreadRateFt
-            self.exportData[sym]['spreadRateSp'] = spreadRateSp
-            self.exportData[sym]['sfDiffRate'] = sfDiffRate
+            self.setExportData(sym, triggerRate, spreadRateFt, spreadRateSp, sfDiffRate)
 
-            if (triggerRate > self.configTrading['config']['diff_trigger_rate']) and (
-                    spreadRateFt < self.configTrading['config']['futures_spread_tol_rate']) and (
-                    spreadRateSp < self.configTrading['config']['spot_spread_tol_rate']) and (
-                    sfDiffRate < self.configTrading['config']['spot_futures_diff_tol_rate']):
+            if (abs(triggerRate) > self.configTrading['diff_trigger_rate']) and (
+                    spreadRateFt < self.configTrading['futures_spread_tol_rate']) and (
+                    spreadRateSp < self.configTrading['spot_spread_tol_rate']) and (
+                    abs(sfDiffRate) < self.configTrading['spot_futures_diff_tol_rate']):
                 n = self.targetBalance[sym]
                 amt = float(self.balance[sym])
-                qty = (n - amt) * self.configTrading['config']['order_qty_rate']
-                price = float(self.orderBookFt[sym]['bid'][0][0]) if qty > 0 else float(self.orderBookFt[sym]['ask'][0][0])
-                # self.orderInfo[self.sym]['priceStep']
+
+                if (n - amt) > 0:
+                    n = n - self.poolSize[sym] * self.configTrading['diff_trigger_rate'] * \
+                        self.configTrading['order_qty_rate']
+                    price = Decimal(self.orderBookFt[sym]['bid'][0][0]) + self.orderInfo[sym]['priceStep']
+                else:
+                    n = n + self.poolSize[sym] * self.configTrading['diff_trigger_rate'] * \
+                        self.configTrading['order_qty_rate']
+                    price = Decimal(self.orderBookFt[sym]['ask'][0][0]) - self.orderInfo[sym]['priceStep']
+
+                qty = (n - amt)
+
                 orders.append((sym, price, qty))
 
         return orders
@@ -148,12 +154,23 @@ class BnTrading(SingleTonAsyncInit):
 
         returns, pending = await asyncio.wait(tasks)
 
+    async def checkPoolUpdate(self):
+        if self.myConfig.checkPoolUpdate():
+            self.pSymbols[1] = True
+            self.pSymbols[2] = True
+            await self.bnExInfo.updateOrderFilters()
+
+        while (self.pSymbols[1] == True) or (self.pSymbols[2] == True):
+            await asyncio.sleep(0.15)
+
     async def run(self):
         while RUNNING_FLAG[0]:
+            await self.checkPoolUpdate()
+
             await self.bnBalance.updateBalance()
 
-            await self.bnFtWebSocket.awaitOrerBookUpdate()
-            await self.bnSpWebSocket.awaitOrerBookUpdate()
+            await self.bnFtWebSocket.awaitOrderBookUpdate()
+            await self.bnSpWebSocket.awaitOrderBookUpdate()
             await self.bnBalance.awaitUpdateEvent()
 
             self.bnFtWebSocket.clearAwaitEvent()
@@ -211,8 +228,8 @@ class Order:
     def fitByRound(self):
         # 가격 step, 수량 step에 대해 반올림 --> 주문금액, 주문량 나옴
         # 최소 주문금액, 최소 주문량에 대해는 validate
-        self.price = self.priceStep * (self.price // self.priceStep)
-        self.qty = self.qtyStep * (self.qty // self.qtyStep)
+        self.price = self.priceStep * round(self.price / self.priceStep)
+        self.qty = self.qtyStep * round(self.qty / self.qtyStep)
         self.validate()
 
     async def buy(self):
@@ -228,7 +245,7 @@ class Order:
         self.logOrder()
 
     def logOrder(self):
-        MyLogger.getInsSync().getLogger().info(
+        MyLogger.getInsSync().getLogger().debug(
             '#ORDER#'
             '\n sym : %s'
             '\n p : %f'

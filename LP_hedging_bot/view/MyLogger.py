@@ -13,7 +13,7 @@ import time
 텔레그램로그
 """
 LOGGER_NAME = 'myLogger{}'
-LOGGER_LEVEL = logging.DEBUG
+LOGGER_LEVEL = logging.INFO
 LOG_FILE_NAME = '/view/AutoHedgeBot'
 EAGER_THREASHOLD = 35
 
@@ -56,8 +56,8 @@ class TeleGramHandler(logging.Handler):
 
 
 class MyLogger(SingleTonAsyncInit):
-    async def _asyncInit(self, myTelegram: MyTelegram, configLogger):
-        self.config = configLogger
+    async def _asyncInit(self, myTelegram: MyTelegram, myConfig):
+        self.config = myConfig.getConfig('configCommon')['logger']
         self.logger = logging.getLogger(LOGGER_NAME.format(time.time()))
         self.logger.setLevel(LOGGER_LEVEL)
         formatter = logging.Formatter(
@@ -82,7 +82,7 @@ class MyLogger(SingleTonAsyncInit):
     async def run(self):
         # flush every 10seconds
         while RUNNING_FLAG[0]:
-            await asyncio.sleep(self.config['config']['flush_period'])
+            await asyncio.sleep(self.config['flush_period'])
             self.fileHandler.myFlush()
 
 

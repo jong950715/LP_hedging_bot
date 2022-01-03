@@ -4,6 +4,7 @@ import json
 
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 from aiogram import Bot
+from aiogram.utils.exceptions import TelegramAPIError, NetworkError
 from telegram import Bot as SyncBot
 from collections import deque
 from common.createTask import *
@@ -38,18 +39,27 @@ class MyTelegram(SingleTonAsyncInit):
                 tasks.append(createTask(self.bot.send_message(self.chatId, msg)))
             returns, pending = await asyncio.wait(tasks)
 
-    async def recvRoutine(self):
+    async def _recvRoutine(self):
         recvs = await self.bot.get_updates(self.latest + 1)
         for r in recvs:
             if r.message:
                 if r.message.chat.id == self.chatId:
-                    self.consumer(r.message.text)
+                    await self.consumer(r.message.text)
             elif r.edited_message:
                 if r.edited_message.chat.id == self.chatId:
-                    self.consumer(r.edited_message.text)
+                    await self.consumer(r.edited_message.text)
             else:
                 pass
             self.latest = r.update_id
+
+    async def recvRoutine(self):
+        try:
+            await self._recvRoutine()
+        except (TelegramAPIError, NetworkError):
+            emsg = traceback.format_exc()
+            self.sendMessage(emsg)
+        except Exception as e:
+            raise e
 
     async def checkLatest(self):
         recvs = await self.bot.get_updates(0)
@@ -58,9 +68,9 @@ class MyTelegram(SingleTonAsyncInit):
         else:
             self.latest = 0
 
-    def consumer(self, text):
+    async def consumer(self, text):
         try:
-            self._consumer(text)
+            await self._consumer(text)
         except IndexError as e:
             self.sendMessage('잘못된 형식')
         except KeyError as e:
@@ -69,7 +79,7 @@ class MyTelegram(SingleTonAsyncInit):
             # self.sendMessage(str(e))
             raise e
 
-    def _consumer(self, text):
+    async def _consumer(self, text):
         func = self.findFunction.findall(text)[0]
         paren = self.findParens.findall(text)[0]
         params = self.findParams.findall(paren)
@@ -78,12 +88,12 @@ class MyTelegram(SingleTonAsyncInit):
                          '\nparams : {2}'
                          .format(func, paren, params))
         if func and paren:
-            self.processCommand(func, params)
+            await self.processCommand(func, params)
         else:
             self.sendMessage('잘못된 형식')
 
-    def processCommand(self, func, params):
-        self.sendMessage(self.myConfig.processCommand(func, params))
+    async def processCommand(self, func, params):
+        self.sendMessage(await self.myConfig.runScript(func, params))
 
     async def run(self):
         await self.checkLatest()

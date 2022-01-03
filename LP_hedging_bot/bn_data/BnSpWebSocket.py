@@ -8,31 +8,39 @@ from common.SingleTonAsyncInit import SingleTonAsyncInit
 from config.config import getConfigKeys
 from common.createTask import RUNNING_FLAG
 
+
 class BnSpWebSocket(SingleTonAsyncInit):
-    async def _asyncInit(self, client: AsyncClient, symbols):
+    async def _asyncInit(self, client: AsyncClient, pSymbols):
         self.cli = client
         self.stream = ''
         self.symbolLU = defaultdict(lambda: None)  # [ticker, market]
+        self.newSymbols = []
         self.fiats = FIATS
         # self.orderBook['symbol']['ask'] = [['price', 'qty'], ['price', 'qty'], ['price', 'qty'], ...] bid = want to buy, ask = want to sell
         self.orderBookSp = defaultdict(lambda: defaultdict(lambda: [[0, 0]] * MaxOderBookDepth))
-        self.setFiatsOrderBook()
-        self.symbols = symbols
+        self.pSymbols = pSymbols  # pSymbols = [symbols, updated]
+        self._setSymbols(pSymbols[0])
+        self.reRun = False
 
     def setFiatsOrderBook(self):
         for sym in self.fiats:
             self.orderBookSp[sym]['bid'] = [[1, 100000] * MaxOderBookDepth]
             self.orderBookSp[sym]['ask'] = [[1, 100000] * MaxOderBookDepth]
-            self.orderBookSp[sym]['update'] = True
+            self.orderBookSp[sym]['event'] = asyncio.Event()
+            self.orderBookSp[sym]['event'].set()
 
     def getOrderBook(self):
         return self.orderBookSp
 
-    def addSymbol(self, s):
-        self.symbols.append(s)
+    def setSymbols(self, symbols):
+        self.newSymbols = symbols
+        self.reRun = True
 
-    def setSymbols(self, s):
-        self.symbols = s
+    def _setSymbols(self, symbols):
+        self.resetSymbols()
+        self.setFiatsOrderBook()
+        for symbol in symbols:
+            self.addStream(symbol, '{}@bookTicker')
 
     def addStream(self, sym: str, ev: str):
         stream = ev.format(sym.lower())
@@ -42,35 +50,50 @@ class BnSpWebSocket(SingleTonAsyncInit):
             self.stream = self.stream + '/' + stream
         self.orderBookSp[sym.upper()]['event'] = asyncio.Event()
 
-    async def awaitOrerBookUpdate(self):
-        for sym, book in self.orderBookSp.items():
-            if sym not in self.fiats:
-                await book['event'].wait()
+    def resetSymbols(self):
+        self.resetStream()
+        self._resetDict()
+
+    def resetStream(self):
+        self.stream = ''
+
+    def _resetDict(self):
+        keys = list(self.orderBookSp.keys())
+        for k in keys:
+            del self.orderBookSp[k]
+
+        # self.orderBookSp = defaultdict(lambda: defaultdict(lambda: [[0, 0]] * MaxOderBookDepth))
+        # 포인터가 바뀌어 버림
+
+    async def awaitOrderBookUpdate(self):
+        books = list(self.orderBookSp.values())
+        tasks = [asyncio.create_task(book['event'].wait()) for book in books]
+        returns, pending = await asyncio.wait(tasks)
 
     def clearAwaitEvent(self):
         for sym, book in self.orderBookSp.items():
-            book['event'].clear()
+            if sym not in self.fiats:
+                book['event'].clear()
 
-    def isOrderBookUpdated(self):
-        for sym in self.symbols:
-            if self.orderBookSp[sym]['update'] is not True:
-                return False
-        else:
-            return True
-
-    def resetFlagOrderBookUpdate(self):
-        for sym, book in self.orderBookSp.items():
-            book['update'] = False
-        for sym in self.fiats:
-            self.orderBookSp[sym]['update'] = True
-
-    async def run(self):
+    async def _run(self):
         self.bsm = BinanceSocketManager(self.cli)
         async with self.bsm._get_socket(path=self.stream) as ts:
             print(self.stream + " is opened")
-            while RUNNING_FLAG[0]:
+            while RUNNING_FLAG[0] and not self.reRun and not self.pSymbols[2]:
                 msg = await ts.recv()
                 self.consumerOrderBook(msg)
+            self.clearAwaitEvent()  # 만약 while문 터지면 실행되야함
+            self.setSymbols(self.pSymbols[0])
+
+    async def run(self):
+        while RUNNING_FLAG[0]:
+            await self._run()
+            if self.reRun:
+                self._setSymbols(self.newSymbols)
+                self.reRun = False
+                self.pSymbols[2] = False
+
+
 
     def consumerOrderBook(self, msg):
         symbol = msg['s']
@@ -82,7 +105,7 @@ class BnSpWebSocket(SingleTonAsyncInit):
 
         self.orderBookSp[symbol]['event'].set()
 
-        #print(symbol, self.orderBookSp[symbol]['bid'][0])  # debug
+        # print(symbol, self.orderBookSp[symbol]['bid'][0])  # debug
 
 
 async def main():

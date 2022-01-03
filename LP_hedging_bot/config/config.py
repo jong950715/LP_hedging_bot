@@ -3,14 +3,10 @@ from definitions import getRootDir
 
 CONFIG_KEYS = '{0}/config/config_keys.ini'.format(getRootDir())
 CONFIG_POOLS = '{0}/config/config_pools.ini'.format(getRootDir())
-CONFIG_TRADING = '{0}/config/config_trading.ini'.format(getRootDir())
-CONFIG_LOGGER = '{0}/config/config_logger.ini'.format(getRootDir())
-CONFIG_SCHEDULER = '{0}/config/config_scheduler.ini'.format(getRootDir())
-CONFIG_FILE_NAME = {'configKeys': CONFIG_KEYS,
-                    'configPools': CONFIG_POOLS,
-                    'configTrading': CONFIG_TRADING,
-                    'configLogger': CONFIG_LOGGER,
-                    'configScheduler': CONFIG_SCHEDULER}
+CONFIG_COMMON = '{0}/config/config_common.ini'.format(getRootDir())
+CONFIG_FILE_NAMES = {'configKeys': CONFIG_KEYS,
+                     'configPools': CONFIG_POOLS,
+                     'configCommon': CONFIG_COMMON}
 '''
 ini는 대소문자 안가림
 '''
@@ -30,25 +26,8 @@ def convertType(n):
 def config_read(config_file):
     pass
 
-
 def getConfigKeys():
     return getConfigFromFileFitType(CONFIG_KEYS)
-
-
-def getConfigPools():
-    return getConfigFromFileFitType(CONFIG_POOLS)
-
-
-def getConfigTrading():
-    return getConfigFromFileFitType(CONFIG_TRADING)
-
-
-def getConfigLogger():
-    return getConfigFromFileFitType(CONFIG_LOGGER)
-
-
-def getConfigScheduler():
-    return getConfigFromFileFitType(CONFIG_SCHEDULER)
 
 
 def _getConfigFromFile(_configFile):

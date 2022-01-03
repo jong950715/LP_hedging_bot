@@ -1,7 +1,7 @@
 from trading.BnTrading import Order
 from binance import AsyncClient
 import asyncio
-from config.config import getConfigKeys, getConfigPools
+from config.config import getConfigKeys
 from bn_data.BnExInfo import BnExInfo
 
 
@@ -11,7 +11,7 @@ async def orderTest():
     client = await AsyncClient.create(configBinance['binance']['api_key'], configBinance['binance']['secret_key'])
 
     bnExInfo = await BnExInfo.createIns(client)
-    bnExInfo.setSymbols(['TRXUSDT'])
+    #bnExInfo.setSymbols(['TRXUSDT'])
     orderInfo = await bnExInfo.getOrderInfo()
 
     # when

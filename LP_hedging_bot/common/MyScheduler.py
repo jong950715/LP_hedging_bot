@@ -1,15 +1,14 @@
 from common.SingleTonAsyncInit import SingleTonAsyncInit
 import asyncio
 from collections import defaultdict
-from config.config import getConfigScheduler
 from common.createTask import RUNNING_FLAG
 # from common.createTask import createTask
 # import schedule  # 기능은 파워풀하지만, 너무 무거움. 매 task 마다 시간 계속비교하고.. AWS free tier 를 위해 자작으로 최적화 ㄱㄱ
 
 
 class MyScheduler(SingleTonAsyncInit):
-    async def _asyncInit(self, configScheduler):
-        self.config = configScheduler
+    async def _asyncInit(self, myConfig):
+        self.config = myConfig.getConfig('configCommon')['scheduler']
 
         # flags에 직접 접근 절대 금지(read도 안됨). flags, timer는 연관된 자료임.
         # flags의 key는 name으로, timer에 담겨 있고,
@@ -20,12 +19,12 @@ class MyScheduler(SingleTonAsyncInit):
 
     def defaultNewFlag(self):
         # flags의 defaultdict의 생성자를 위한 함수
-        newPeriod = self.config['config']['default_period'] / self.config['config']['base_period']
+        newPeriod = self.config['default_period'] / self.config['base_period']
 
         if 'minValue' in self.newKey:
-            newPeriod = self.config['config']['min_value_period'] / self.config['config']['base_period']
+            newPeriod = self.config['min_value_period'] / self.config['base_period']
         if 'runningAlert' == self.newKey:
-            newPeriod = self.config['config']['running_alert_period'] / self.config['config']['base_period']
+            newPeriod = self.config['running_alert_period'] / self.config['base_period']
         self.timer[newPeriod][1].add(self.newKey)
         return [False, newPeriod]
 
@@ -43,7 +42,7 @@ class MyScheduler(SingleTonAsyncInit):
         self.setPeriodOfFlagName(flagName, newPeriod)
 
     def setPeriodOfFlagName(self, flagName, newPeriod):
-        newPeriod = newPeriod / self.config['config']['base_period']
+        newPeriod = newPeriod / self.config['base_period']
         oldPeriod = self.accessFlags(flagName)[1]
 
         self.accessFlags(flagName)[1] = newPeriod
@@ -73,7 +72,7 @@ class MyScheduler(SingleTonAsyncInit):
 
     async def run(self):
         while RUNNING_FLAG[0]:
-            await asyncio.sleep(self.config['config']['base_period'])
+            await asyncio.sleep(self.config['base_period'])
             self.scheduler()
 
 

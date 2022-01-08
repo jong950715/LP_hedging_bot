@@ -52,9 +52,9 @@ class BnTrading(SingleTonAsyncInit):
         return self.exportData
 
     async def order(self, sym, price, qty):
-        # print("order : ", sym, price, qty)
-        order = Order(self.cli, self.orderInfo, sym, price, qty)
-        await order.execute()
+        print("order : ", sym, price, qty)
+        # order = Order(self.cli, self.orderInfo, sym, price, qty)
+        # await order.execute()
 
     def calcTargetBalance(self):
         for sym in self.targetBalance.keys():

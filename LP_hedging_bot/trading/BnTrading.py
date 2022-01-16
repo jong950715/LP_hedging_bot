@@ -138,6 +138,9 @@ class BnTrading(SingleTonAsyncInit):
         return orders
 
     async def submitOrders(self, orders):
+        if self.configTrading['debug']:
+            MyLogger.getInsSync().getLogger().info(orders)
+            return
         tasks = [createTask(asyncio.sleep(0))]  # empty tasks
         for o in orders:
             tasks.append(createTask(self.order(*o)))  # o = (sym, price, qty)

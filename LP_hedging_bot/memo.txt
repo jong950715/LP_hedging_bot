@@ -1,5 +1,7 @@
 - Decimal 최적화
 
+* No Order 모드 만들기
+
 * API rate Limit 체크
 
 * 주문 로직 조정

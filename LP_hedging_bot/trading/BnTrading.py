@@ -1,5 +1,7 @@
 import asyncio
 from binance import AsyncClient
+from binance.exceptions import BinanceAPIException
+
 from bn_data.BnCommons import *
 from decimal import Decimal
 from bn_data.BnBalance import BnBalance
@@ -54,7 +56,12 @@ class BnTrading(SingleTonAsyncInit):
     async def order(self, sym, price, qty):
         # print("order : ", sym, price, qty)
         order = Order(self.cli, self.orderInfo, sym, price, qty)
-        await order.execute()
+        try:
+            await order.execute()
+        except BinanceAPIException as e:
+            if e.code == -2027:
+                if MyScheduler.getInsSync().checkFlags('leverageLevel') is False:
+                    MyLogger.getInsSync().getLogger().info('check your leverage Level : {0}'.format(sym))
 
     def calcTargetBalance(self):
         for sym in self.targetBalance.keys():

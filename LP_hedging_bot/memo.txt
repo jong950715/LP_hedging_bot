@@ -1,3 +1,5 @@
+- 청산 로직 ( position + 됐을때)
+
 - Decimal 최적화
 
 * No Order 모드 만들기

@@ -9,6 +9,8 @@ from trading.BnTrading import BnTrading
 
 class BackTrading(BnTrading):
     def backInit(self, length, inPrice, slip):
+        # debt 추가 필요해보임.
+
         # 값 주입
         self.orderInfo['USDT']['priceStep'] = Decimal('0.0001')
 
@@ -26,29 +28,51 @@ class BackTrading(BnTrading):
 
         # 초기값
         index = 0
-        net = 0
+
         self.calcTargetBalance()
         for sym in self.pSymbols[0]:
-            self.backRes[sym][index][0] = toDecimal(-self.targetBalance[sym])
+            self.backRes[sym][index][0] = toDecimal(self.poolSize[sym])
             self.backRes[sym][index][1] = toDecimal(self.targetBalance[sym])
             self.backRes[sym][index][2] = toDecimal(self.inPrice[sym][index])
 
         sym = 'USDT'
-        self.backRes[sym][index][0] = toDecimal(-self.targetBalance[sym])
+        self.backRes[sym][index][0] = toDecimal(self.poolSize[sym])
         self.backRes[sym][index][1] = toDecimal(self.targetBalance[sym])
         self.backRes[sym][index][2] = toDecimal('1')
 
-        self.backRes['NET'][index][0] = net
+        net = 0
+        hodl = 0
+        for sym in self.pSymbols[0]:
+            net += (self.backRes[sym][index][0] + self.backRes[sym][index][1]) * self.backRes[sym][index][2]
+            hodl += (self.backRes[sym][0][0] + self.backRes[sym][0][1]) * self.backRes[sym][index][2]
+        sym = 'USDT'
+        net += (self.backRes[sym][index][0] + self.backRes[sym][index][1]) * self.backRes[sym][index][2]
+        hodl += (self.backRes[sym][0][0] + self.backRes[sym][0][1]) * self.backRes[sym][index][2]
 
-    def backTestWithOrder(self, i, orders):
+        self.backRes['RESULT'][index][0] = net
+        self.backRes['RESULT'][index][1] = hodl
+
+    def getFarmSize(self, i):
+        for k, v in self.backRes.items():
+            v[i][0] = Decimal('0')
+
+        for key, configPool in self.configPools.items():
+            sym1 = configPool['sym1']
+            sym2 = configPool['sym2']
+            k = configPool['k']
+            p1 = (float(self.orderBookSp[sym1]['bid'][0][0]) + float(self.orderBookSp[sym1]['ask'][0][0])) / 2
+            p2 = (float(self.orderBookSp[sym2]['bid'][0][0]) + float(self.orderBookSp[sym2]['ask'][0][0])) / 2
+            # deprecated
+
+    def testStepWithOrder(self, i, orders):
         # 정보 업뎃 [farm, bn1, price]
         for sym in self.pSymbols[0]:
-            self.backRes[sym][i][0] = toDecimal(-self.targetBalance[sym])
+            self.backRes[sym][i][0] = toDecimal(self.poolSize[sym])
             self.backRes[sym][i][1] = self.backRes[sym][i - 1][1]
             self.backRes[sym][i][2] = toDecimal(self.inPrice[sym][i])
 
         sym = 'USDT'
-        self.backRes[sym][i][0] = toDecimal(-self.targetBalance[sym])
+        self.backRes[sym][i][0] = toDecimal(self.poolSize[sym])
         self.backRes[sym][i][1] = self.backRes[sym][i - 1][1]
         self.backRes[sym][i][2] = toDecimal('1')
 
@@ -62,14 +86,16 @@ class BackTrading(BnTrading):
             self.backRes['USDT'][i][1] -= abs(qty * price) * self.slip
 
         net = 0
-
+        hodl = 0
         for sym in self.pSymbols[0]:
             net += (self.backRes[sym][i][0] + self.backRes[sym][i][1]) * self.backRes[sym][i][2]
-
+            hodl += (self.backRes[sym][0][0] + self.backRes[sym][0][1]) * self.backRes[sym][i][2]
         sym = 'USDT'
         net += (self.backRes[sym][i][0] + self.backRes[sym][i][1]) * self.backRes[sym][i][2]
+        hodl += (self.backRes[sym][0][0] + self.backRes[sym][0][1]) * self.backRes[sym][i][2]
 
-        self.backRes['NET'][i][0] = net
+        self.backRes['RESULT'][i][0] = net
+        self.backRes['RESULT'][i][1] = hodl
 
     def setPriceBalance(self, i):
         for sym in self.pSymbols[0]:
@@ -90,17 +116,17 @@ class BackTrading(BnTrading):
             orders = self.generateOrderList()  # (sym, price, qty)
 
             # 백테스팅
-            self.backTestWithOrder(i, orders)
+            self.testStepWithOrder(i, orders)
 
-        return self.backRes['NET'][-1][0]
+        return (self.backRes['RESULT'][-1][0] - self.backRes['RESULT'][-1][1])
 
     def exportCsv(self, maxL=0):
         keys = list(self.backRes.keys())
 
-        keys.remove('NET')
+        keys.remove('RESULT')
         keys.remove('USDT')
 
-        cols = len(keys) * 4 + 5
+        cols = len(keys) * 4 + 6
 
         if maxL and maxL < self.length:
             n = self.length // maxL
@@ -118,10 +144,11 @@ class BackTrading(BnTrading):
                 row[j * 4 + 1] = '{} hedged'.format(k)
                 row[j * 4 + 2] = '{} price'.format(k)
 
-            row[-5] = 'USDT farm'
-            row[-4] = 'USDT hedged'
-            row[-3] = 'USDT price'
-            row[-1] = 'NET'
+            row[-6] = 'USDT farm'
+            row[-5] = 'USDT hedged'
+            row[-4] = 'USDT price'
+            row[-2] = 'NET'
+            row[-1] = 'HODL'
             csvWriter.writerow(row)
 
             for i in range(maxL):
@@ -135,10 +162,11 @@ class BackTrading(BnTrading):
 
                 # 테더
                 for ii in range(3):
-                    row[-5 + ii] = self.backRes['USDT'][idx][ii]
+                    row[-6 + ii] = self.backRes['USDT'][idx][ii]
 
                 # NET
-                row[-1] = self.backRes['NET'][idx][0]
+                row[-2] = self.backRes['RESULT'][idx][0]
+                row[-1] = self.backRes['RESULT'][idx][1]
 
                 csvWriter.writerow(row)
 

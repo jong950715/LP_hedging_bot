@@ -38,9 +38,9 @@ async def main():
                                             bnSpWebSocket=bnSpWebSocket)
 
     start = int(
-        datetime.datetime(2021, 1, 1, 0, 0, 0, 0, datetime.timezone(datetime.timedelta(hours=9))).timestamp()) * 1000
+        datetime.datetime(2022, 1, 1, 0, 0, 0, 0, datetime.timezone(datetime.timedelta(hours=9))).timestamp()) * 1000
     end = int(
-        datetime.datetime(2021, 1, 31, 0, 0, 0, 0, datetime.timezone(datetime.timedelta(hours=9))).timestamp()) * 1000
+        datetime.datetime(2022, 3, 31, 0, 0, 0, 0, datetime.timezone(datetime.timedelta(hours=9))).timestamp()) * 1000
 
 
     inPrice = dict()
@@ -51,7 +51,7 @@ async def main():
     print(bnTrading.backRun())
     bnTrading.exportCsv()
 
-    await bnTrading.sweepTest((1/100), (20/100), 10, (0.03/100), (0.1/100), 3)
+    await bnTrading.sweepTest((1/100), (20/100), 20, (0.03/100), (0.1/100), 3)
     bnTrading.exportSweepTest()
 
     await client.close_connection()

@@ -49,12 +49,12 @@ async def main():
 
     bnTrading.backInit(length=len(inPrice[sym]), inPrice=inPrice, slip=(0.1 / 100))
     print(bnTrading.backRun())
-    # bnTrading.exportCsv()
+    bnTrading.exportCsv()
 
-    await bnTrading.sweepTest((0.3/100), (1/100), 10, (0.03/100), (0.1/100), 3)
+    await bnTrading.sweepTest((11/100), (20/100), 10, (0.03/100), (0.1/100), 3)
     bnTrading.exportSweepTest()
 
-    client.close_connection()
+    await client.close_connection()
 
 
 if __name__ == '__main__':

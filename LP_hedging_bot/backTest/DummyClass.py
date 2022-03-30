@@ -1,11 +1,12 @@
 from collections import defaultdict
+from decimal import Decimal
 
 
 class DummySocket:
     def __init__(self):
         self.orderBook = defaultdict(lambda: defaultdict(lambda: [[0, 0]] * 5))
-        self.orderBook['USDT']['bid'][0][0] = 1
-        self.orderBook['USDT']['ask'][0][0] = 1
+        self.orderBook['USDT']['bid'][0][0] = Decimal('1')
+        self.orderBook['USDT']['ask'][0][0] = Decimal('1')
 
     def setPrice(self, sym, price):
         self.orderBook[sym]['bid'][0][0] = price

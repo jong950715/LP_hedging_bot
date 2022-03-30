@@ -3,6 +3,7 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
+from backTest.testCommon import toDecimal
 from trading.BnTrading import BnTrading
 
 
@@ -14,7 +15,7 @@ class BackTrading(BnTrading):
         # 입력받은거 저장
         self.length = length
         self.inPrice = inPrice  # [sym][i]
-        self.slip = slip  # 0.1 / 100  # parameter 설정! 외부로 빼자
+        self.slip = toDecimal(slip)
 
         # 파밍 포지션, 바낸 포지션, netWorth
         self.backRes = defaultdict(lambda: [[0, 0, 0] for _ in range(length)])  # [sym][i][farm, bn1, price]
@@ -28,35 +29,37 @@ class BackTrading(BnTrading):
         net = 0
         self.calcTargetBalance()
         for sym in self.pSymbols[0]:
-            self.backRes[sym][index][0] = -self.targetBalance[sym]
-            self.backRes[sym][index][1] = self.targetBalance[sym]
-            self.backRes[sym][index][2] = float(self.inPrice[sym][index])
+            self.backRes[sym][index][0] = toDecimal(-self.targetBalance[sym])
+            self.backRes[sym][index][1] = toDecimal(self.targetBalance[sym])
+            self.backRes[sym][index][2] = toDecimal(self.inPrice[sym][index])
 
         sym = 'USDT'
-        self.backRes[sym][index][0] = -self.targetBalance[sym]
-        self.backRes[sym][index][1] = self.targetBalance[sym]
-        self.backRes[sym][index][2] = 1
+        self.backRes[sym][index][0] = toDecimal(-self.targetBalance[sym])
+        self.backRes[sym][index][1] = toDecimal(self.targetBalance[sym])
+        self.backRes[sym][index][2] = toDecimal('1')
 
         self.backRes['NET'][index][0] = net
 
     def backTestWithOrder(self, i, orders):
         # 정보 업뎃 [farm, bn1, price]
         for sym in self.pSymbols[0]:
-            self.backRes[sym][i][0] = -self.targetBalance[sym]
+            self.backRes[sym][i][0] = toDecimal(-self.targetBalance[sym])
             self.backRes[sym][i][1] = self.backRes[sym][i - 1][1]
-            self.backRes[sym][i][2] = float(self.inPrice[sym][i])
+            self.backRes[sym][i][2] = toDecimal(self.inPrice[sym][i])
 
         sym = 'USDT'
-        self.backRes[sym][i][0] = -self.targetBalance[sym]
+        self.backRes[sym][i][0] = toDecimal(-self.targetBalance[sym])
         self.backRes[sym][i][1] = self.backRes[sym][i - 1][1]
-        self.backRes[sym][i][2] = 1
+        self.backRes[sym][i][2] = toDecimal('1')
 
         # order 처리
         for (sym, price, qty) in orders:  # (sym, price, qty)
             if sym == 'USDT':
                 continue
+            qty = toDecimal(qty)
             self.backRes[sym][i][1] += qty
-            self.backRes['USDT'][i][1] -= qty * float(price) * (1 + self.slip)
+            self.backRes['USDT'][i][1] -= qty * price
+            self.backRes['USDT'][i][1] -= abs(qty * price) * self.slip
 
         net = 0
 
@@ -91,7 +94,7 @@ class BackTrading(BnTrading):
 
         return self.backRes['NET'][-1][0]
 
-    def exportCsv(self, maxL=5000):
+    def exportCsv(self, maxL=0):
         keys = list(self.backRes.keys())
 
         keys.remove('NET')
